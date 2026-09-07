@@ -55,3 +55,11 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Visual Studio local files
+.vs/
+
+# Frontend dependencies and build output
+/frontend/node_modules/
+/frontend/dist/
+*.csproj.user
