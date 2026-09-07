@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Omne-Crud-Demo.Domain.Tests/Omne-Crud-Demo.Domain.Tests.csproj" Id="1d57d8f8-1df4-497b-8446-3004dd083331" />
+  </Folder>
   <Project Path="frontend/frontend.esproj">
     <Build />
     <Deploy />

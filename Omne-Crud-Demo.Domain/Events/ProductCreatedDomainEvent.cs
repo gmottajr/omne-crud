@@ -7,11 +7,13 @@ public sealed class ProductCreatedDomainEvent : DomainEventBase
     public ProductCreatedDomainEvent(
         string name,
         decimal price,
-        string description)
+        string description,
+        string sku)
     {
         Name = name;
         Price = price;
         Description = description;
+        Sku = sku;
     }
 
     public string Name { get; }
@@ -19,4 +21,6 @@ public sealed class ProductCreatedDomainEvent : DomainEventBase
     public decimal Price { get; }
 
     public string Description { get; }
+
+    public string Sku { get; }
 }

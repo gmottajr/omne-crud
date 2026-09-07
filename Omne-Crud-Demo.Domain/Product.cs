@@ -12,17 +12,23 @@ public sealed class Product : AggregateRoot<int>
     public Product(
         string name,
         decimal price,
-        string description)
+        string description,
+        Sku sku)
     {
+        ArgumentNullException.ThrowIfNull(sku);
+
         SetName(name);
         SetPrice(price);
         SetDescription(description);
+
+        Sku = sku;
 
         //In order to demostrate the use of domain events, we will raise a ProductCreatedDomainEvent when a new product is created.
         Raise(new ProductCreatedDomainEvent(
             Name,
             Price,
-            Description));
+            Description,
+            Sku.Value));
     }
 
     public string Name { get; private set; } = string.Empty;
@@ -30,6 +36,8 @@ public sealed class Product : AggregateRoot<int>
     public decimal Price { get; private set; }
 
     public string Description { get; private set; } = string.Empty;
+
+    public Sku Sku { get; private set; } = null!;
 
     public void Update(
         string name,
