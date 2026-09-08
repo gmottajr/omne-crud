@@ -9,7 +9,7 @@ namespace Omne_Crud_Demo.Infrastructure.Tests.Persistence;
 public sealed class ProductRepositoryTests
 {
     private const string SKU_XXXV = "XXXV-555123";
-
+    private const string SKU_WWWYYY = "WWW-YYY-4444";
     private static AppDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -137,5 +137,38 @@ public sealed class ProductRepositoryTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(
             () => repository.ExistsBySkuAsync(null!));
+    }
+
+    [Fact]
+    public async Task GetBySkuAsync_ShouldReturnCorrectProduct_WhenMultipleProductsExist()
+    {
+        await using var context = CreateContext();
+
+        var repository = CreateRepository(context);
+
+        await repository.AddAsync(
+            CreateProduct(
+                SKU_XXXV,
+                "webcam",
+                323.00m,
+                "Very good"));
+
+        await repository.AddAsync(
+            CreateProduct(
+                SKU_WWWYYY,
+                "Mouse",
+                49.90m,
+                "Gaming mouse"));
+
+        await repository.SaveChangesAsync();
+
+        context.ChangeTracker.Clear();
+
+        var result = await repository.GetBySkuAsync(
+            Sku.Create(SKU_WWWYYY));
+
+        Assert.NotNull(result);
+        Assert.Equal(SKU_WWWYYY, result.Sku.Value);
+        Assert.Equal("Mouse", result.Name);
     }
 }
