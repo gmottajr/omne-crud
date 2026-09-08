@@ -1,16 +1,19 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
+const apiTarget = process.env.SERVER_HTTPS ?? process.env.SERVER_HTTP;
+
 export default defineConfig({
   plugins: [react()],
   server: {
-    proxy: {
-      // Proxy API calls to the app service
-      '/api': {
-        target: process.env.SERVER_HTTPS || process.env.SERVER_HTTP,
-        changeOrigin: true
-      }
-    }
+    proxy: apiTarget
+      ? {
+          '/products': {
+            target: apiTarget,
+            changeOrigin: true,
+            secure: false
+          }
+        }
+      : undefined
   }
 });

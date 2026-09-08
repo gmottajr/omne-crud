@@ -1,181 +1,234 @@
-import { useState, useEffect } from 'react';
-import aspireLogo from '/Aspire.png';
+import { useCallback, useEffect, useState } from 'react';
 import './App.css';
+import { productsApi } from './api/productsApi';
+import { ProductForm } from './components/ProductForm';
+import { ProductList } from './components/ProductList';
+import {
+  ApiError,
+  type CreateProductRequest,
+  type Product,
+  type UpdateProductRequest
+} from './types/product';
 
-interface WeatherForecast {
-  date: string;
-  temperatureC: number;
-  temperatureF: number;
-  summary: string;
+type LoadMode = 'initial' | 'refresh';
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback;
 }
 
 function App() {
-  const [weatherData, setWeatherData] = useState<WeatherForecast[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [useCelsius, setUseCelsius] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingIds, setDeletingIds] = useState<ReadonlySet<number>>(() => new Set());
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [createFormVersion, setCreateFormVersion] = useState(0);
 
-  const fetchWeatherForecast = async () => {
-    setLoading(true);
-    setError(null);
-    
+  const loadProducts = useCallback(async (mode: LoadMode): Promise<boolean> => {
+    if (mode === 'initial') {
+      setIsInitialLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
+
+    setLoadError(null);
+
     try {
-      const response = await fetch('/api/weatherforecast');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data: WeatherForecast[] = await response.json();
-      setWeatherData(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch weather data');
-      console.error('Error fetching weather forecast:', err);
+      const data = await productsApi.getProducts();
+      setProducts(data);
+      return true;
+    } catch (error) {
+      setLoadError(errorMessage(error, 'Não foi possível carregar os produtos.'));
+      return false;
     } finally {
-      setLoading(false);
+      if (mode === 'initial') {
+        setIsInitialLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadProducts('initial');
+  }, [loadProducts]);
+
+  const handleCreate = async (request: CreateProductRequest) => {
+    setIsSaving(true);
+    setMutationError(null);
+    setNotice(null);
+
+    try {
+      await productsApi.createProduct(request);
+      setCreateFormVersion((version) => version + 1);
+      setNotice('Produto cadastrado com sucesso.');
+      await loadProducts('refresh');
+    } catch (error) {
+      setMutationError(errorMessage(error, 'Não foi possível cadastrar o produto.'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  useEffect(() => {
-    fetchWeatherForecast();
-  }, []);
+  const handleUpdate = async (request: UpdateProductRequest) => {
+    if (!selectedProduct) {
+      return;
+    }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    setIsSaving(true);
+    setMutationError(null);
+    setNotice(null);
+
+    try {
+      await productsApi.updateProduct(selectedProduct.id, request);
+      setSelectedProduct(null);
+      setNotice('Produto atualizado com sucesso.');
+      await loadProducts('refresh');
+    } catch (error) {
+      setMutationError(errorMessage(error, 'Não foi possível atualizar o produto.'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (product: Product) => {
+    const confirmed = window.confirm(
+      `Excluir o produto "${product.name}" (${product.sku})? Esta ação não pode ser desfeita.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingIds((current) => new Set(current).add(product.id));
+    setMutationError(null);
+    setNotice(null);
+
+    try {
+      await productsApi.deleteProduct(product.id);
+      setProducts((current) => current.filter((item) => item.id !== product.id));
+      setSelectedProduct((current) => current?.id === product.id ? null : current);
+      setNotice('Produto excluído com sucesso.');
+    } catch (error) {
+      setMutationError(errorMessage(error, 'Não foi possível excluir o produto.'));
+    } finally {
+      setDeletingIds((current) => {
+        const next = new Set(current);
+        next.delete(product.id);
+        return next;
+      });
+    }
+  };
+
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setMutationError(null);
+    setNotice(null);
+  };
+
+  const handleCancelEdit = () => {
+    setSelectedProduct(null);
+    setMutationError(null);
   };
 
   return (
     <div className="app-container">
       <header className="app-header">
-        <a 
-          href="https://aspire.dev" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          aria-label="Visit Aspire website (opens in new tab)"
-          className="logo-link"
-        >
-          <img src={aspireLogo} className="logo" alt="Aspire logo" />
-        </a>
-        <h1 className="app-title">Aspire Starter</h1>
-        <p className="app-subtitle">Modern distributed application development</p>
+        <p className="eyebrow">Omne CRUD Demo</p>
+        <h1 className="app-title">Produtos</h1>
+        <p className="app-subtitle">Gerencie os produtos cadastrados na aplicação.</p>
       </header>
 
       <main className="main-content">
-        <section className="weather-section" aria-labelledby="weather-heading">
-          <div className="card">
-            <div className="section-header">
-              <h2 id="weather-heading" className="section-title">Weather Forecast</h2>
-              <div className="header-actions">
-                <fieldset className="toggle-switch" aria-label="Temperature unit selection">
-                  <legend className="visually-hidden">Temperature unit</legend>
-                  <button 
-                    className={`toggle-option ${!useCelsius ? 'active' : ''}`}
-                    onClick={() => setUseCelsius(false)}
-                    aria-pressed={!useCelsius}
-                    type="button"
-                  >
-                    <span aria-hidden="true">°F</span>
-                    <span className="visually-hidden">Fahrenheit</span>
-                  </button>
-                  <button 
-                    className={`toggle-option ${useCelsius ? 'active' : ''}`}
-                    onClick={() => setUseCelsius(true)}
-                    aria-pressed={useCelsius}
-                    type="button"
-                  >
-                    <span aria-hidden="true">°C</span>
-                    <span className="visually-hidden">Celsius</span>
-                  </button>
-                </fieldset>
-                <button 
+        {(mutationError || notice) && (
+          <div
+            className={mutationError ? 'message error-message' : 'message notice-message'}
+            role={mutationError ? 'alert' : 'status'}
+            aria-live="polite"
+          >
+            {mutationError ?? notice}
+          </div>
+        )}
+
+        <div className="workspace-grid">
+          <section className="form-section" aria-label="Formulário de produto">
+            <div className="card form-card">
+              {selectedProduct ? (
+                <ProductForm
+                  key={`edit-${selectedProduct.id}`}
+                  mode="edit"
+                  product={selectedProduct}
+                  onSubmit={handleUpdate}
+                  onCancel={handleCancelEdit}
+                  disabled={isSaving}
+                />
+              ) : (
+                <ProductForm
+                  key={`create-${createFormVersion}`}
+                  mode="create"
+                  onSubmit={handleCreate}
+                  disabled={isSaving}
+                />
+              )}
+            </div>
+          </section>
+
+          <section className="products-section" aria-labelledby="products-heading">
+            <div className="card">
+              <div className="section-header">
+                <div>
+                  <p className="eyebrow">Catálogo</p>
+                  <h2 id="products-heading" className="section-title">Produtos cadastrados</h2>
+                  <p className="section-description">
+                    {products.length === 1 ? '1 produto encontrado.' : `${products.length} produtos encontrados.`}
+                  </p>
+                </div>
+                <button
                   className="refresh-button"
-                  onClick={fetchWeatherForecast} 
-                  disabled={loading}
-                  aria-label={loading ? 'Loading weather forecast' : 'Refresh weather forecast'}
+                  onClick={() => void loadProducts('refresh')}
+                  disabled={isInitialLoading || isRefreshing}
                   type="button"
                 >
-                  <svg 
-                    className={`refresh-icon ${loading ? 'spinning' : ''}`}
-                    width="20" 
-                    height="20" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2"
-                    aria-hidden="true"
-                    focusable="false"
-                  >
-                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                  </svg>
-                  <span>{loading ? 'Loading...' : 'Refresh'}</span>
+                  {isRefreshing ? 'Atualizando...' : 'Atualizar lista'}
                 </button>
               </div>
+
+              {loadError && (
+                <div className="message error-message" role="alert" aria-live="polite">
+                  <span>{loadError}</span>
+                  <button type="button" onClick={() => void loadProducts('refresh')}>
+                    Tentar novamente
+                  </button>
+                </div>
+              )}
+
+              {isInitialLoading && products.length === 0 ? (
+                <div className="loading-state" role="status" aria-live="polite">
+                  Carregando produtos...
+                </div>
+              ) : loadError && products.length === 0 ? (
+                <div className="unavailable-state" role="status">
+                  A lista não está disponível no momento.
+                </div>
+              ) : (
+                <ProductList
+                  products={products}
+                  deletingIds={deletingIds}
+                  onEdit={handleEdit}
+                  onDelete={(product) => void handleDelete(product)}
+                />
+              )}
             </div>
-            
-            {error && (
-              <div className="error-message" role="alert" aria-live="polite">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <span>{error}</span>
-              </div>
-            )}
-            
-            {loading && weatherData.length === 0 && (
-              <div className="loading-skeleton" role="status" aria-live="polite" aria-label="Loading weather data">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="skeleton-row" aria-hidden="true" />
-                ))}
-                <span className="visually-hidden">Loading weather forecast data...</span>
-              </div>
-            )}
-            
-            {weatherData.length > 0 && (
-              <div className="weather-grid">
-                {weatherData.map((forecast, index) => (
-                  <article key={index} className="weather-card" aria-label={`Weather for ${formatDate(forecast.date)}`}>
-                    <h3 className="weather-date">
-                      <time dateTime={forecast.date}>{formatDate(forecast.date)}</time>
-                    </h3>
-                    <p className="weather-summary">{forecast.summary}</p>
-                    <div className="weather-temps" aria-label={`Temperature: ${useCelsius ? forecast.temperatureC : forecast.temperatureF} degrees ${useCelsius ? 'Celsius' : 'Fahrenheit'}`}>
-                      <div className="temp-group">
-                        <span className="temp-value" aria-hidden="true">
-                          {useCelsius ? forecast.temperatureC : forecast.temperatureF}°
-                        </span>
-                        <span className="temp-unit" aria-hidden="true">{useCelsius ? 'Celsius' : 'Fahrenheit'}</span>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
 
       <footer className="app-footer">
-        <nav aria-label="Footer navigation">
-          <a href="https://aspire.dev" target="_blank" rel="noopener noreferrer">
-            Learn more about Aspire<span className="visually-hidden"> (opens in new tab)</span>
-          </a>
-          <a 
-            href="https://github.com/microsoft/aspire" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="github-link"
-            aria-label="View Aspire on GitHub (opens in new tab)"
-          >
-            <img src="/github.svg" alt="" width="24" height="24" aria-hidden="true" />
-            <span className="visually-hidden">GitHub</span>
-          </a>
-        </nav>
+        <span>Omne CRUD Demo</span>
       </footer>
     </div>
   );
