@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using Omne_Crud_Demo.Core.Common.Services;
 using Omne_Crud_Demo.Core.Models;
 using Omne_Crud_Demo.Core.Models.Requests;
 
@@ -8,6 +9,7 @@ namespace Omne_Crud_Demo.Presentation.Tests.Integration;
 [Collection(PresentationIntegrationCollection.Name)]
 public sealed class ProductEndpointsTests : IAsyncLifetime
 {
+    private const string UPDATE_PROD = "Gaming Keyboard";
     private readonly PresentationWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
@@ -56,24 +58,18 @@ public sealed class ProductEndpointsTests : IAsyncLifetime
             "SKU-001",
             "Mechanical Keyboard");
 
-        var response =
-            await _client.GetAsync(
-                $"/products/{id}");
+        var response = await _client.GetAsync($"/products/{id}");
 
-        Assert.Equal(
-            HttpStatusCode.OK,
-            response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var product =
-            await response.Content
-                .ReadFromJsonAsync<ProductDto>();
+        var product = await response.Content.ReadFromJsonAsync<ApplicationResponse<ProductDto>>();
 
-        Assert.NotNull(product);
-        Assert.Equal(id, product.Id);
-        Assert.Equal("SKU-001", product.Sku);
+        Assert.NotNull(product.Data);
+        Assert.Equal(id, product.Data.Id);
+        Assert.Equal("SKU-001", product.Data.Sku);
         Assert.Equal(
             "Mechanical Keyboard",
-            product.Name);
+            product.Data.Name);
     }
 
     [Fact]
@@ -99,8 +95,7 @@ public sealed class ProductEndpointsTests : IAsyncLifetime
             "SKU-002",
             "Mouse");
 
-        var response =
-            await _client.GetAsync("/products");
+        var response = await _client.GetAsync("/products");
 
         Assert.Equal(
             HttpStatusCode.OK,
@@ -108,22 +103,22 @@ public sealed class ProductEndpointsTests : IAsyncLifetime
 
         var products =
             await response.Content
-                .ReadFromJsonAsync<List<ProductDto>>();
+                .ReadFromJsonAsync<ApplicationResponse<List<ProductDto>>>();
 
-        Assert.NotNull(products);
-        Assert.Equal(2, products.Count);
+        Assert.NotNull(products.Data);
+        Assert.Equal(2, products.Data.Count);
     }
 
     [Fact]
     public async Task PutProduct_ShouldUpdateProduct()
     {
         var id = await CreateProductAsync(
-            "SKU-001",
-            "Keyboard");
+            "SKU-33378",
+            "Webcam");
 
         var request = new UpdateProductRequest
         {
-            Name = "Gaming Keyboard",
+            Name = UPDATE_PROD,
             Price = 399.90m,
             Description =
                 "Updated mechanical gaming keyboard"
@@ -134,25 +129,17 @@ public sealed class ProductEndpointsTests : IAsyncLifetime
                 $"/products/{id}",
                 request);
 
-        Assert.Equal(
-            HttpStatusCode.OK,
-            response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var getResponse =
-            await _client.GetAsync(
-                $"/products/{id}");
+        var getResponse = await _client.GetAsync($"/products/{id}");
 
-        var product =
-            await getResponse.Content
-                .ReadFromJsonAsync<ProductDto>();
+        var product = await getResponse.Content.ReadFromJsonAsync<ApplicationResponse<ProductDto>>();
 
-        Assert.NotNull(product);
-        Assert.Equal(
-            "Gaming Keyboard",
-            product.Name);
+        Assert.NotNull(product.Data);
+        Assert.Equal(UPDATE_PROD, product.Data.Name);
         Assert.Equal(
             399.90m,
-            product.Price);
+            product.Data.Price);
     }
 
     [Fact]
@@ -179,16 +166,13 @@ public sealed class ProductEndpointsTests : IAsyncLifetime
             getResponse.StatusCode);
     }
 
-    private async Task<int> CreateProductAsync(
-        string sku,
-        string name)
+    private async Task<int> CreateProductAsync(string sku, string name)
     {
         var request = new CreateProductRequest
         {
             Name = name,
-            Price = 149.90m,
-            Description =
-                $"Description for {name}",
+            Price = GeneratePriceRamdon(),
+            Description = $"This is my Description for {name}",
             Sku = sku
         };
 
@@ -197,9 +181,24 @@ public sealed class ProductEndpointsTests : IAsyncLifetime
                 "/products",
                 request);
 
-        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadFromJsonAsync<ApplicationResponse<int>>();
 
-        return await response.Content
-            .ReadFromJsonAsync<int>();
+        Assert.True(
+            response.IsSuccessStatusCode,
+            $"POST /products failed with {(int)response.StatusCode} " +
+            $"{response.StatusCode}. Body: {body}");
+
+        return body.Data;
+    }
+
+    private static decimal GeneratePriceRamdon()
+    {
+        var rnd = new Random();
+        decimal minValue = 10.5m;
+        decimal maxValue = 50.25m;
+
+        decimal randomRangeDecimal = minValue + (decimal)rnd.NextDouble() * (maxValue - minValue);
+        return Math.Round(randomRangeDecimal, 2); 
+
     }
 }

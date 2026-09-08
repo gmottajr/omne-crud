@@ -1,3 +1,4 @@
+using FastEndpoints;
 using Omne_Crud_Demo.IoC;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +12,7 @@ builder.Services.AddProblemDetails();
 builder.Services.RegisterServices();
 builder.Services.RegisterRepositories();
 builder.Services.AddPersistence(builder.Configuration);
-
+builder.Services.AddFastEndpoints();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -46,7 +47,7 @@ api.MapGet("weatherforecast", () =>
 app.MapDefaultEndpoints();
 
 app.UseFileServer();
-
+app.UseFastEndpoints();
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)

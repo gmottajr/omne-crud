@@ -16,9 +16,7 @@ public sealed class ProductQueryService : IProductQueryService
         _repository = repository;
     }
 
-    public async Task<ApplicationResponse<ProductDto>> GetByIdAsync(
-        GetProductByIdQuery query,
-        CancellationToken ct = default)
+    public async Task<ApplicationResponse<ProductDto>> GetByIdAsync(GetProductByIdQuery query, CancellationToken ct = default)
     {
         var product = await _repository.GetByIdAsync(
             query.Id,

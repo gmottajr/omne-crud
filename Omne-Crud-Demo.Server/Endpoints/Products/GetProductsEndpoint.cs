@@ -20,9 +20,7 @@ public sealed class GetProductsEndpoint : EndpointWithoutRequest
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var result = await _service.GetAllAsync(
-            new GetProductsQuery(),
-            ct);
+        var result = await _service.GetAllAsync(new GetProductsQuery(), ct);
 
         await Send.OkAsync(result);
     }

@@ -22,9 +22,7 @@ public sealed class GetProductByIdEndpoint : EndpointWithoutRequest
     {
         var id = Route<int>("id");
 
-        var result = await _service.GetByIdAsync(
-            new GetProductByIdQuery(id),
-            ct);
+        var result = await _service.GetByIdAsync(new GetProductByIdQuery(id), ct);
 
         if (!result.Success)
         {
