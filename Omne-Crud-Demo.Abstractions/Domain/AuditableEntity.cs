@@ -6,12 +6,12 @@ public abstract class AuditableEntity : EntityBase
 
     public DateTime? UpdatedAt { get; protected set; }
 
-    protected AuditableEntity()
+    public void MarkAsCreated(DateTime when)
     {
-        CreatedAt = DateTime.UtcNow;
+        CreatedAt = when;
     }
 
-    protected void MarkAsUpdated(DateTime? when = null)
+    public void MarkAsUpdated(DateTime? when = null)
     {
         UpdatedAt = when ?? DateTime.UtcNow;
     }
