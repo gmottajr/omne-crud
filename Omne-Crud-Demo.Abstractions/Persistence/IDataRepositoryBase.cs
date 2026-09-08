@@ -68,7 +68,7 @@ public interface IDataRepositoryBase<TEntity, TKey>
     /// <summary>
     /// Deletes an entity by its identifier.
     /// </summary>
-    Task DeleteAsync(TKey id, CancellationToken ct = default);
+    Task<bool> DeleteAsync(TKey id, CancellationToken ct = default);
 
     /// <summary>
     /// Persists all changes and dispatches domain events.

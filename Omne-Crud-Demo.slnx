@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Tests/">
+    <Project Path="Tests/Omne-Crud-Demo.Application.Tests/Omne-Crud-Demo.Application.Tests.csproj" />
     <Project Path="Tests/Omne-Crud-Demo.Domain.Tests/Omne-Crud-Demo.Domain.Tests.csproj" Id="1d57d8f8-1df4-497b-8446-3004dd083331" />
     <Project Path="Tests/Omne-Crud-Demo.Infrastructure.Tests/Omne-Crud-Demo.Infrastructure.Tests.csproj" />
   </Folder>
@@ -10,6 +11,7 @@
   <Project Path="Omne-Crud-Demo.Abstractions/Omne-Crud-Demo.Abstractions.csproj" />
   <Project Path="Omne-Crud-Demo.AppHost/Omne-Crud-Demo.AppHost.csproj" />
   <Project Path="Omne-Crud-Demo.Application/Omne-Crud-Demo.Application.csproj" />
+  <Project Path="Omne-Crud-Demo.Core/Omne-Crud-Demo.Core.csproj" />
   <Project Path="Omne-Crud-Demo.Domain/Omne-Crud-Demo.Domain.csproj" />
   <Project Path="Omne-Crud-Demo.Infrastructure/Omne-Crud-Demo.Infrastructure.csproj" />
   <Project Path="Omne-Crud-Demo.IoC/Omne-Crud-Demo.IoC.csproj" />

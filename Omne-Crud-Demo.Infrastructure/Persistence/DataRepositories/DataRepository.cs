@@ -141,22 +141,22 @@ public class DataRepository<TEntity, TKey> : DataRepositoryBase<TEntity, TKey> w
         return Task.CompletedTask;
     }
 
-    public override async Task DeleteAsync(TKey id, CancellationToken ct = default)
+    public override async Task<bool> DeleteAsync(TKey id, CancellationToken ct = default)
     {
-        _logger.LogDebug("Staging {EntityType} with ID {EntityId} for deletion.", typeof(TEntity).Name, id);
+        _logger.LogDebug("Deleting {EntityType} with ID {EntityId}.", typeof(TEntity).Name, id);
 
-        var entity = await GetByIdAsync(id, ct);
+        var affectedRows = await _dbSet
+            .Where(entity => entity.Id.Equals(id))
+            .ExecuteDeleteAsync(ct);
 
-        if (entity is null)
+        if (affectedRows == 0)
         {
-            _logger.LogDebug("{EntityType} with ID {EntityId} was not found and cannot be staged for deletion.", typeof(TEntity).Name, id);
-
-            return;
+            _logger.LogDebug("{EntityType} with ID {EntityId} was not found for deletion.", typeof(TEntity).Name, id);
+            return false;
         }
 
-        _dbSet.Remove(entity);
-
-        _logger.LogDebug("{EntityType} with ID {EntityId} was staged for deletion.", typeof(TEntity).Name, id);
+        _logger.LogInformation("{EntityType} with ID {EntityId} was deleted. Affected rows: {AffectedRows}.", typeof(TEntity).Name, id, affectedRows);
+        return true;
     }
 
     public override async Task SaveChangesAsync(CancellationToken ct = default)

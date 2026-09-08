@@ -9,7 +9,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Omne-Crud-Demo.Abstractions\Omne-Crud-Demo.Abstractions.csproj" />
+    <ProjectReference Include="..\Omne-Crud-Demo.Core\Omne-Crud-Demo.Core.csproj" />
     <ProjectReference Include="..\Omne-Crud-Demo.Domain\Omne-Crud-Demo.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Products\Commands\" />
+    <Folder Include="Products\Queries\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
   </ItemGroup>
 
 </Project>

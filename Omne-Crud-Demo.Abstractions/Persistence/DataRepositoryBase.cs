@@ -41,7 +41,7 @@ public abstract class DataRepositoryBase<TEntity, TKey> : IDataRepositoryBase<TE
     public abstract Task UpdateAsync(TEntity entity, CancellationToken ct = default);
 
     /// <inheritdoc />
-    public abstract Task DeleteAsync(TKey id, CancellationToken ct = default);
+    public abstract Task<bool> DeleteAsync(TKey id, CancellationToken ct = default);
 
     /// <inheritdoc />
     public abstract Task SaveChangesAsync(CancellationToken ct = default);
