@@ -3,20 +3,36 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Omne_Crud_Demo.Domain;
 using Omne_Crud_Demo.Infrastructure.Persistence.Data;
 using Omne_Crud_Demo.Infrastructure.Persistence.DataRepositories;
+using Omne_Crud_Demo.Infrastructure.Tests.Integration;
 
 namespace Omne_Crud_Demo.Infrastructure.Tests.Persistence;
 
+[Collection(InfrastructureIntegrationCollection.Name)]
 public sealed class ProductRepositoryTests
 {
     private const string SKU_XXXV = "XXXV-555123";
     private const string SKU_WWWYYY = "WWW-YYY-4444";
-    private static AppDbContext CreateContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
 
-        return new AppDbContext(options, NullLogger<AppDbContext>.Instance);
+    private readonly InfrastructureDatabaseFixture _fixture;
+
+    public ProductRepositoryTests(InfrastructureDatabaseFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    public Task InitializeAsync()
+    {
+        return _fixture.ResetDatabaseAsync();
+    }
+
+    public Task DisposeAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    private AppDbContext CreateContext()
+    {
+        return _fixture.CreateDbContext();
     }
 
     private static ProductRepository CreateRepository(AppDbContext context)
@@ -37,6 +53,7 @@ public sealed class ProductRepositoryTests
     [Fact]
     public async Task GetBySkuAsync_ShouldReturnProduct_WhenSkuExists()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -80,6 +97,7 @@ public sealed class ProductRepositoryTests
     [Fact]
     public async Task ExistsBySkuAsync_ShouldReturnTrue_WhenSkuExists()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -100,6 +118,7 @@ public sealed class ProductRepositoryTests
     [Fact]
     public async Task ExistsBySkuAsync_ShouldReturnFalse_WhenSkuDoesNotExist()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -115,6 +134,13 @@ public sealed class ProductRepositoryTests
             Sku.Create("XYZ-999"));
 
         Assert.False(exists);
+    }
+
+    private async Task ResetDatabaseAsync()
+    {
+        await using var context = CreateContext();
+
+        await context.Products.ExecuteDeleteAsync();
     }
 
     [Fact]
@@ -142,6 +168,7 @@ public sealed class ProductRepositoryTests
     [Fact]
     public async Task GetBySkuAsync_ShouldReturnCorrectProduct_WhenMultipleProductsExist()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -149,16 +176,16 @@ public sealed class ProductRepositoryTests
         await repository.AddAsync(
             CreateProduct(
                 SKU_XXXV,
-                "webcam",
+                "webcam XXXXX",
                 323.00m,
-                "Very good"));
+                "Very good XXXXX"));
 
         await repository.AddAsync(
             CreateProduct(
                 SKU_WWWYYY,
                 "Mouse",
                 49.90m,
-                "Gaming mouse"));
+                "Gaming mouse XXXXXX"));
 
         await repository.SaveChangesAsync();
 

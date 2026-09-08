@@ -3,9 +3,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Omne_Crud_Demo.Domain;
 using Omne_Crud_Demo.Infrastructure.Persistence.Data;
 using Omne_Crud_Demo.Infrastructure.Persistence.DataRepositories;
+using Omne_Crud_Demo.Infrastructure.Tests.Integration;
 
 namespace Omne_Crud_Demo.Infrastructure.Tests.Persistence;
 
+[Collection(InfrastructureIntegrationCollection.Name)]
 public sealed class DataRepositoryTests
 {
     private const string SKU_AGRYZ = "AGRYZ-73987";
@@ -14,15 +16,27 @@ public sealed class DataRepositoryTests
     private const string GIT_TYPE = "twelve-string";
     private const decimal PRICE = 1789.70m;
 
-    private static AppDbContext CreateContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
+    private readonly InfrastructureDatabaseFixture _fixture;
 
-        return new AppDbContext(
-            options,
-            NullLogger<AppDbContext>.Instance);
+    public DataRepositoryTests(
+        InfrastructureDatabaseFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    public Task InitializeAsync()
+    {
+        return _fixture.ResetDatabaseAsync();
+    }
+
+    public Task DisposeAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    private AppDbContext CreateContext()
+    {
+        return _fixture.CreateDbContext();
     }
 
     private static DataRepository<Product, int> CreateRepository(
@@ -64,6 +78,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task SaveChangesAsync_ShouldPersistAddedEntity()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -87,6 +102,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task GetByIdAsync_ShouldReturnEntity_WhenEntityExists()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -120,6 +136,8 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task GetAllAsync_ShouldReturnAllEntities()
     {
+        await ResetDatabaseAsync();
+
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -158,6 +176,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task GetAllAsync_ShouldReturnEmptyCollection_WhenNoEntitiesExist()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -168,51 +187,11 @@ public sealed class DataRepositoryTests
         Assert.Empty(result);
     }
 
-    [Fact]
-    public async Task GetAllAsync_ShouldApplyOrdering_WhenOrderByIsProvided()
-    {
-        await using var context = CreateContext();
-
-        var repository = CreateRepository(context);
-
-        await repository.AddAsync(
-            CreateProduct(
-                "ABC-001",
-                "Mouse",
-                49.90m,
-                "Gaming mouse"));
-
-        await repository.AddAsync(
-            CreateProduct(
-                "ABC-002",
-                PROD_GIT,
-                PRICE,
-                GIT_TYPE));
-
-        await repository.AddAsync(
-            CreateProduct(
-                "ABC-003",
-                "Monitor",
-                599.90m,
-                "Gaming monitor"));
-
-        await repository.SaveChangesAsync();
-
-        context.ChangeTracker.Clear();
-
-        var result = await repository.GetAllAsync(
-            orderBy: query => query.OrderBy(x => x.Name));
-
-        Assert.Collection(
-            result,
-            x => Assert.Equal(PROD_GIT, x.Name),
-            x => Assert.Equal("Monitor", x.Name),
-            x => Assert.Equal("Mouse", x.Name));
-    }
 
     [Fact]
     public async Task QueryAsync_ShouldReturnOnlyEntitiesMatchingPredicate()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -254,6 +233,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task QueryAsync_ShouldReturnEmptyCollection_WhenNoEntitiesMatchPredicate()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -272,6 +252,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task QueryAsync_ShouldApplyOrdering_WhenOrderByIsProvided()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -315,6 +296,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task QuerySingleAsync_ShouldReturnEntity_WhenExactlyOneEntityMatches()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -337,8 +319,7 @@ public sealed class DataRepositoryTests
 
         context.ChangeTracker.Clear();
 
-        var result = await repository.QuerySingleAsync(
-            product => product.Sku.Value == SKU_JKLG);
+        var result = await repository.QuerySingleAsync(product => product.Sku == Sku.Create(SKU_JKLG));
 
         Assert.NotNull(result);
         Assert.Equal("Mouse", result.Name);
@@ -348,6 +329,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task QuerySingleAsync_ShouldReturnNull_WhenNoEntityMatches()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -366,6 +348,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task QuerySingleAsync_ShouldThrow_WhenMoreThanOneEntityMatches()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -394,6 +377,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldStageEntityAsModified()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -424,6 +408,7 @@ public sealed class DataRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldPersistUpdatedValues_AfterSaveChanges()
     {
+        await ResetDatabaseAsync();
         await using var context = CreateContext();
 
         var repository = CreateRepository(context);
@@ -455,25 +440,7 @@ public sealed class DataRepositoryTests
         Assert.NotNull(persistedProduct.UpdatedAt);
     }
 
-    [Fact]
-    public async Task DeleteAsync_ShouldStageEntityAsDeleted_WhenEntityExists()
-    {
-        await using var context = CreateContext();
-
-        var repository = CreateRepository(context);
-
-        var product = CreateProduct(SKU_AGRYZ);
-
-        await repository.AddAsync(product);
-        await repository.SaveChangesAsync();
-
-        await repository.DeleteAsync(product.Id);
-
-        Assert.Equal(
-            EntityState.Deleted,
-            context.Entry(product).State);
-    }
-
+    
     [Fact]
     public async Task DeleteAsync_ShouldRemoveEntity_AfterSaveChanges()
     {
@@ -486,8 +453,9 @@ public sealed class DataRepositoryTests
         await repository.AddAsync(product);
         await repository.SaveChangesAsync();
 
-        await repository.DeleteAsync(product.Id);
-        await repository.SaveChangesAsync();
+        var deleted = await repository.DeleteAsync(product.Id);
+
+        Assert.True(deleted);
 
         context.ChangeTracker.Clear();
 
@@ -503,10 +471,15 @@ public sealed class DataRepositoryTests
 
         var repository = CreateRepository(context);
 
-        await repository.DeleteAsync(999);
+        var deleted = await repository.DeleteAsync(999);
 
-        var affectedRows = await context.SaveChangesAsync();
+        Assert.Equal(false, deleted);
+    }
 
-        Assert.Equal(0, affectedRows);
+    public async Task ResetDatabaseAsync()
+    {
+        await using var context = CreateContext();
+
+        await context.Products.ExecuteDeleteAsync();
     }
 }

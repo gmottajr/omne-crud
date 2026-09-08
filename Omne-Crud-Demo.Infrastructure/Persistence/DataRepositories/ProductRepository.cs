@@ -16,15 +16,13 @@ public sealed class ProductRepository : DataRepository<Product, int>, IProductRe
     {
         ArgumentNullException.ThrowIfNull(sku);
 
-        return QuerySingleAsync(
-            product => product.Sku == sku,
-            ct: ct);
+        return QuerySingleAsync(product => product.Sku == sku, ct: ct);
     }
 
     public Task<bool> ExistsBySkuAsync(Sku sku, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(sku);
 
-        return _dbSet.AnyAsync(product => product.Sku.Value == sku.Value, ct);
+        return _dbSet.AnyAsync(product => product.Sku == sku, ct);
     }
 }

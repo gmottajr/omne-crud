@@ -120,19 +120,19 @@ public sealed class ProductQueryServiceIntegrationTests: IAsyncLifetime
         await SeedProductAsync(
             "Mouse",
             100m,
-            "Mouse",
+            "Mouse  XXXXX",
             "SKU-001");
 
         await SeedProductAsync(
             "Keyboard",
             200m,
-            "Keyboard",
+            "Keyboard  XXXXX",
             "SKU-002");
 
         await SeedProductAsync(
             "Display",
             500m,
-            "Display",
+            "Display XXXXX",
             "SKU-003");
 
         await using var context = _fixture.CreateDbContext();

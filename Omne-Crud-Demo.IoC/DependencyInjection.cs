@@ -30,7 +30,7 @@ public static class DependencyInjection
         var connectionString =
             configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
-                "Connection string 'productsdb' was not configured.");
+                "Connection string 'DefaultConnection' was not configured.");
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString)

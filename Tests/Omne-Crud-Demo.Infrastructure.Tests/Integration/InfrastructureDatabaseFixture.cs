@@ -5,9 +5,9 @@ using Npgsql;
 using Omne_Crud_Demo.Domain;
 using Omne_Crud_Demo.Infrastructure.Persistence.Data;
 
-namespace Omne_Crud_Demo.Application.Tests.Integration.Fixtures;
+namespace Omne_Crud_Demo.Infrastructure.Tests.Integration;
 
-public sealed class ApplicationDatabaseFixture : IAsyncLifetime
+public sealed class InfrastructureDatabaseFixture : IAsyncLifetime
 {
     private DbContextOptions<AppDbContext>? _options;
 
@@ -19,7 +19,7 @@ public sealed class ApplicationDatabaseFixture : IAsyncLifetime
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile(
                 "appsettings.json",
-                optional: false,
+                optional: true,
                 reloadOnChange: false)
             .AddUserSecrets(
                 typeof(Program).Assembly,
@@ -53,10 +53,12 @@ public sealed class ApplicationDatabaseFixture : IAsyncLifetime
         if (_options is null)
         {
             throw new InvalidOperationException(
-                "The database fixture has not been initialized.");
+                "Database fixture has not been initialized.");
         }
 
-        return new AppDbContext(_options, NullLogger<AppDbContext>.Instance);
+        return new AppDbContext(
+            _options,
+            NullLogger<AppDbContext>.Instance);
     }
 
     public async Task ResetDatabaseAsync()
@@ -75,7 +77,8 @@ public sealed class ApplicationDatabaseFixture : IAsyncLifetime
 
     private static void ValidateTestDatabase(string connectionString)
     {
-        var builder = new NpgsqlConnectionStringBuilder(connectionString);
+        var builder =
+            new NpgsqlConnectionStringBuilder(connectionString);
 
         if (string.IsNullOrWhiteSpace(builder.Database) ||
             !builder.Database.Contains(
@@ -83,8 +86,8 @@ public sealed class ApplicationDatabaseFixture : IAsyncLifetime
                 StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                $"Refusing to run integration tests against database " +
-                $"'{builder.Database}'. The test database name must contain 'test'.");
+                $"Refusing to run integration tests against database '{builder.Database}'. " +
+                "The test database name must contain 'test'.");
         }
     }
 }

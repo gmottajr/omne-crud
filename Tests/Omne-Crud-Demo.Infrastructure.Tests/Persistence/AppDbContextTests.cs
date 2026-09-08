@@ -2,23 +2,38 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Omne_Crud_Demo.Domain;
 using Omne_Crud_Demo.Infrastructure.Persistence.Data;
+using Omne_Crud_Demo.Infrastructure.Tests.Integration;
 
 namespace Omne_Crud_Demo.Infrastructure.Tests.Persistence;
 
-public sealed class AppDbContextTests
+[Collection(InfrastructureIntegrationCollection.Name)]
+public sealed class AppDbContextTests : IAsyncLifetime
 {
     private const string SKU_ABYC = "ABYC-349123";
 
-    private static AppDbContext CreateContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
+    private readonly InfrastructureDatabaseFixture _fixture;
 
-        return new AppDbContext(
-            options,
-            NullLogger<AppDbContext>.Instance);
+    public AppDbContextTests(
+        InfrastructureDatabaseFixture fixture)
+    {
+        _fixture = fixture;
     }
+
+    public Task InitializeAsync()
+    {
+        return _fixture.ResetDatabaseAsync();
+    }
+
+    public Task DisposeAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    private AppDbContext CreateContext()
+    {
+        return _fixture.CreateDbContext();
+    }
+
 
     [Fact]
     public async Task SaveChangesAsync_ShouldSetCreatedAt_WhenEntityIsAdded()
