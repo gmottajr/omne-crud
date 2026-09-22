@@ -1,4 +1,5 @@
 ﻿using Omne_Crud_Demo.Application.Abstractions.Persistence;
+using Omne_Crud_Demo.Application.Mappings;
 using Omne_Crud_Demo.Core.Common.Services;
 using Omne_Crud_Demo.Core.Common.Services.Consts;
 using Omne_Crud_Demo.Domain;
@@ -38,7 +39,7 @@ public sealed class ProductCommandService : IProductCommandService
 
         try
         {
-            product = new Product(command.Name, command.Price, command.Description, sku);
+            product = ProductMapper.ToEntity(command);
         }
         catch (ArgumentException ex)
         {
