@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
+using Omne_Crud_Demo.Abstractions;
 using Omne_Crud_Demo.Domain;
 using Omne_Crud_Demo.Infrastructure.Persistence.Data;
 
@@ -59,6 +60,22 @@ public sealed class InfrastructureDatabaseFixture : IAsyncLifetime
         return new AppDbContext(
             _options,
             NullLogger<AppDbContext>.Instance);
+    }
+
+    public AppDbContext CreateDbContext(IDomainEventDispatcher domainEventDispatcher)
+    {
+        ArgumentNullException.ThrowIfNull(domainEventDispatcher);
+
+        if (_options is null)
+        {
+            throw new InvalidOperationException(
+                "Database fixture has not been initialized.");
+        }
+
+        return new AppDbContext(
+            _options,
+            NullLogger<AppDbContext>.Instance,
+            domainEventDispatcher);
     }
 
     public async Task ResetDatabaseAsync()

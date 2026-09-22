@@ -1,8 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Omne_Crud_Demo.Abstractions;
 using Omne_Crud_Demo.Application;
 using Omne_Crud_Demo.Application.Abstractions.Persistence;
+using Omne_Crud_Demo.Application.Products.Events;
+using Omne_Crud_Demo.Domain;
+using Omne_Crud_Demo.Infrastructure.Events;
 using Omne_Crud_Demo.Infrastructure.Persistence.Data;
 using Omne_Crud_Demo.Infrastructure.Persistence.DataRepositories;
 
@@ -21,6 +25,10 @@ public static class DependencyInjection
     {
         services.AddScoped<IProductCommandService, ProductCommandService>();
         services.AddScoped<IProductQueryService, ProductQueryService>();
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddScoped<
+            IDomainEventHandler<ProductCreatedDomainEvent>,
+            ProductCreatedDomainEventHandler>();
 
         return services;
     }

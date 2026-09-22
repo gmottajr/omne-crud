@@ -9,10 +9,21 @@ namespace Omne_Crud_Demo.Infrastructure.Persistence.Data;
 public sealed class AppDbContext : DbContext
 {
     private readonly ILogger<AppDbContext> _logger;
+    private readonly IDomainEventDispatcher _domainEventDispatcher;
 
-    public AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbContext> logger): base(options)
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        ILogger<AppDbContext> logger) : this(options, logger, NoOpDomainEventDispatcher.Instance)
+    {
+    }
+
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        ILogger<AppDbContext> logger,
+        IDomainEventDispatcher domainEventDispatcher) : base(options)
     {
         _logger = logger;
+        _domainEventDispatcher = domainEventDispatcher;
     }
 
     public DbSet<Product> Products => Set<Product>();
@@ -28,12 +39,30 @@ public sealed class AppDbContext : DbContext
         CancellationToken cancellationToken = default)
     {
         ApplyAuditFields();
+        var entitiesWithDomainEvents = GetEntitiesWithDomainEvents();
+        var domainEvents = entitiesWithDomainEvents
+            .SelectMany(entry => entry.Entity.DomainEvents)
+            .ToArray();
 
         try
         {
             _logger.LogDebug("Saving changes to database. Tracked entries: {TrackedEntries}", ChangeTracker.Entries().Count());
 
             var affectedRows = await base.SaveChangesAsync(cancellationToken);
+
+            if (domainEvents.Length > 0)
+            {
+                _logger.LogDebug(
+                    "Dispatching {DomainEventCount} domain events after saving changes.",
+                    domainEvents.Length);
+
+                await _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+
+                foreach (var entry in entitiesWithDomainEvents)
+                    entry.Entity.ClearDomainEvents();
+
+                _logger.LogDebug("Domain events dispatched and cleared successfully.");
+            }
 
             _logger.LogInformation("Database changes saved successfully. Affected rows: {AffectedRows}", affectedRows);
 
@@ -44,6 +73,26 @@ public sealed class AppDbContext : DbContext
             _logger.LogError(ex, "Database update failed while saving changes.");
 
             throw;
+        }
+    }
+
+    private List<EntityEntry<EntityBase>> GetEntitiesWithDomainEvents()
+    {
+        return ChangeTracker
+            .Entries<EntityBase>()
+            .Where(entry => entry.Entity.DomainEvents.Count > 0)
+            .ToList();
+    }
+
+    private sealed class NoOpDomainEventDispatcher : IDomainEventDispatcher
+    {
+        public static NoOpDomainEventDispatcher Instance { get; } = new();
+
+        public Task DispatchAsync(
+            IReadOnlyCollection<IDomainEvent> domainEvents,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
         }
     }
 
