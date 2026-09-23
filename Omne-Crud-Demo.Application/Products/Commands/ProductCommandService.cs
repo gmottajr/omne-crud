@@ -66,7 +66,10 @@ public sealed class ProductCommandService : IProductCommandService
 
         try
         {
-            product.Update(command.Name, command.Price, command.Description);
+            product.Update(
+                command.Name,
+                Price.Create(command.Price),
+                command.Description);
         }
         catch (ArgumentException ex)
         {

@@ -45,7 +45,7 @@ public sealed class ProductRepositoryTests
     {
         return new Product(
             name,
-            price,
+            Price.Create(price),
             description,
             Sku.Create(sku));
     }

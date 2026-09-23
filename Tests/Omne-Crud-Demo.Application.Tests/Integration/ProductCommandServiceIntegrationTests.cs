@@ -58,7 +58,7 @@ public sealed class ProductCommandServiceIntegrationTests
             .SingleAsync(x => x.Id == response.Data);
 
         Assert.Equal("Mechanical Keyboard", product.Name);
-        Assert.Equal(249.90m, product.Price);
+        Assert.Equal(249.90m, product.Price.Value);
         Assert.Equal(
             "RGB mechanical keyboard",
             product.Description);
@@ -136,7 +136,7 @@ public sealed class ProductCommandServiceIntegrationTests
             .SingleAsync(x => x.Id == product.Id);
 
         Assert.Equal("Updated Name", persistedProduct.Name);
-        Assert.Equal(25.50m, persistedProduct.Price);
+        Assert.Equal(25.50m, persistedProduct.Price.Value);
         Assert.Equal(
             "Updated description",
             persistedProduct.Description);
@@ -243,7 +243,7 @@ public sealed class ProductCommandServiceIntegrationTests
 
         var product = new Product(
             name,
-            price,
+            Price.Create(price),
             description,
             Sku.Create(sku));
 

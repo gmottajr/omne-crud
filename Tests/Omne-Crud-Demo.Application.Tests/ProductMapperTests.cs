@@ -24,7 +24,7 @@ public sealed class ProductMapperTests
         Assert.Equal(product.Id, result.Id);
         Assert.Equal(product.Sku.Value, result.Sku);
         Assert.Equal(product.Name, result.Name);
-        Assert.Equal(product.Price, result.Price);
+        Assert.Equal(product.Price.Value, result.Price);
         Assert.Equal(product.Description, result.Description);
         Assert.Equal(product.CreatedAt, result.CreatedAt);
         Assert.Equal(product.UpdatedAt, result.UpdatedAt);
@@ -115,7 +115,7 @@ public sealed class ProductMapperTests
     {
         return new Product(
             name,
-            price,
+            Price.Create(price),
             description,
             Sku.Create(sku));
     }

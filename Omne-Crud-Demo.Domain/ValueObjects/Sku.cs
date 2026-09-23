@@ -1,4 +1,6 @@
-﻿namespace Omne_Crud_Demo.Domain;
+﻿using Omne_Crud_Demo.Core.Exceptions;
+
+namespace Omne_Crud_Demo.Domain;
 
 public sealed record Sku
 {
@@ -13,7 +15,11 @@ public sealed record Sku
 
     public static Sku Create(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidSkuException(
+                "SKU cannot be null, empty, or whitespace.");
+        }
 
         var normalizedValue = value
             .Trim()
@@ -21,8 +27,7 @@ public sealed record Sku
 
         if (normalizedValue.Length > MaxLength)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(value),
+            throw new InvalidSkuException(
                 $"SKU cannot exceed {MaxLength} characters.");
         }
 

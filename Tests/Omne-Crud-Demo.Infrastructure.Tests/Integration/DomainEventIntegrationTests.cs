@@ -37,7 +37,7 @@ public sealed class DomainEventIntegrationTests : IAsyncLifetime
 
         var product = new Product(
             "Keyboard",
-            99.90m,
+            Price.Create(99.90m),
             "Mechanical keyboard",
             Sku.Create("EVENT-001"));
 
@@ -75,7 +75,7 @@ public sealed class DomainEventIntegrationTests : IAsyncLifetime
 
         var product = new Product(
             "Mouse",
-            49.90m,
+            Price.Create(49.90m),
             "Gaming mouse",
             Sku.Create("EVENT-002"));
 

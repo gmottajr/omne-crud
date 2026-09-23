@@ -67,7 +67,7 @@ public sealed class AppDbContextTests : IAsyncLifetime
 
         product.Update(
             "Gaming Keyboard",
-            129.90m,
+            Price.Create(129.90m),
             "Mechanical gaming keyboard");
 
         await context.SaveChangesAsync();
@@ -89,7 +89,7 @@ public sealed class AppDbContextTests : IAsyncLifetime
 
         product.Update(
             "Gaming Keyboard",
-            129.90m,
+            Price.Create(129.90m),
             "Mechanical gaming keyboard");
 
         await context.SaveChangesAsync();
@@ -130,7 +130,7 @@ public sealed class AppDbContextTests : IAsyncLifetime
 
         product.Update(
             "Gaming Keyboard",
-            129.90m,
+            Price.Create(129.90m),
             "Mechanical gaming keyboard");
 
         await context.SaveChangesAsync();
@@ -146,13 +146,13 @@ public sealed class AppDbContextTests : IAsyncLifetime
 
         var firstProduct = new Product(
             "Keyboard",
-            99.90m,
+            Price.Create(99.90m),
             "Mechanical keyboard",
             Sku.Create(SKU_ABYC));
 
         var secondProduct = new Product(
             "Mouse",
-            49.90m,
+            Price.Create(49.90m),
             "Gaming mouse",
             Sku.Create("ABC-456"));
 
@@ -178,7 +178,7 @@ public sealed class AppDbContextTests : IAsyncLifetime
 
         var secondProduct = new Product(
             "Mouse",
-            49.90m,
+            Price.Create(49.90m),
             "Gaming mouse",
             Sku.Create("ABC-456"));
 
@@ -187,12 +187,12 @@ public sealed class AppDbContextTests : IAsyncLifetime
 
         firstProduct.Update(
             "Gaming Keyboard",
-            129.90m,
+            Price.Create(129.90m),
             "Mechanical gaming keyboard");
 
         secondProduct.Update(
             "Gaming Mouse",
-            69.90m,
+            Price.Create(69.90m),
             "High precision gaming mouse");
 
         await context.SaveChangesAsync();
@@ -247,7 +247,7 @@ public sealed class AppDbContextTests : IAsyncLifetime
 
         Assert.Equal(SKU_ABYC, persistedProduct.Sku.Value);
         Assert.Equal("Keyboard", persistedProduct.Name);
-        Assert.Equal(99.90m, persistedProduct.Price);
+        Assert.Equal(99.90m, persistedProduct.Price.Value);
         Assert.Equal("Mechanical keyboard", persistedProduct.Description);
 
         Assert.NotEqual(default, persistedProduct.CreatedAt);
@@ -266,7 +266,7 @@ public sealed class AppDbContextTests : IAsyncLifetime
 
         product.Update(
             "Gaming Keyboard",
-            129.90m,
+            Price.Create(129.90m),
             "Mechanical gaming keyboard");
 
         var affectedRows = await context.SaveChangesAsync();
@@ -280,7 +280,7 @@ public sealed class AppDbContextTests : IAsyncLifetime
             .SingleAsync();
 
         Assert.Equal("Gaming Keyboard", persistedProduct.Name);
-        Assert.Equal(129.90m, persistedProduct.Price);
+        Assert.Equal(129.90m, persistedProduct.Price.Value);
         Assert.Equal(
             "Mechanical gaming keyboard",
             persistedProduct.Description);
@@ -293,7 +293,7 @@ public sealed class AppDbContextTests : IAsyncLifetime
     {
         return new Product(
                     "Keyboard",
-                    99.90m,
+                    Price.Create(99.90m),
                     "Mechanical keyboard",
                     Sku.Create(SKU_ABYC));
     }

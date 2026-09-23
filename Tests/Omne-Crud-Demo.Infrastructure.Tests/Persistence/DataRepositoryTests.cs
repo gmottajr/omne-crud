@@ -55,7 +55,7 @@ public sealed class DataRepositoryTests
     {
         return new Product(
             name,
-            price,
+            Price.Create(price),
             description,
             Sku.Create(sku));
     }
@@ -95,7 +95,7 @@ public sealed class DataRepositoryTests
 
         Assert.Equal(SKU_AGRYZ, persistedProduct.Sku.Value);
         Assert.Equal(PROD_GIT, persistedProduct.Name);
-        Assert.Equal(PRICE, persistedProduct.Price);
+        Assert.Equal(PRICE, persistedProduct.Price.Value);
         Assert.Equal(GIT_TYPE, persistedProduct.Description);
     }
 
@@ -222,12 +222,12 @@ public sealed class DataRepositoryTests
         context.ChangeTracker.Clear();
 
         var result = await repository.QueryAsync(
-            product => product.Price >= 500m && product.Price < 1000);
+            product => product.Price.Value >= 500m && product.Price.Value < 1000);
 
         var product = Assert.Single(result);
 
         Assert.Equal("Monitor", product.Name);
-        Assert.Equal(599.90m, product.Price);
+        Assert.Equal(599.90m, product.Price.Value);
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public sealed class DataRepositoryTests
         await repository.SaveChangesAsync();
 
         var result = await repository.QueryAsync(
-            product => product.Price > 2000m);
+            product => product.Price.Value > 2000m);
 
         Assert.Empty(result);
     }
@@ -283,7 +283,7 @@ public sealed class DataRepositoryTests
         context.ChangeTracker.Clear();
 
         var result = await repository.QueryAsync(
-            product => product.Price > 0,
+            product => product.Price.Value > 0,
             orderBy: query => query.OrderByDescending(x => x.Price));
 
         Assert.Collection(
@@ -371,7 +371,7 @@ public sealed class DataRepositoryTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => repository.QuerySingleAsync(
-                product => product.Price == PRICE));
+                product => product.Price.Value == PRICE));
     }
 
     [Fact]
@@ -395,7 +395,7 @@ public sealed class DataRepositoryTests
 
         persistedProduct.Update(
             "Gaming Keyboard",
-            129.90m,
+            Price.Create(129.90m),
             "Mechanical gaming keyboard");
 
         await repository.UpdateAsync(persistedProduct);
@@ -420,7 +420,7 @@ public sealed class DataRepositoryTests
 
         product.Update(
             "Gaming Keyboard",
-            129.90m,
+            Price.Create(129.90m),
             "Mechanical gaming keyboard");
 
         await repository.UpdateAsync(product);
@@ -432,7 +432,7 @@ public sealed class DataRepositoryTests
 
         Assert.NotNull(persistedProduct);
         Assert.Equal("Gaming Keyboard", persistedProduct.Name);
-        Assert.Equal(129.90m, persistedProduct.Price);
+        Assert.Equal(129.90m, persistedProduct.Price.Value);
         Assert.Equal(
             "Mechanical gaming keyboard",
             persistedProduct.Description);

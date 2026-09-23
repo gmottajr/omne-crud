@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Omne_Crud_Demo.Core.Exceptions;
 
 namespace Omne_Crud_Demo.Domain.Tests.Entities;
 
@@ -15,13 +16,13 @@ public sealed class ProductTests
 
         var product = new Product(
             " Keyboard ",
-            99.90m,
+            Price.Create(99.90m),
             " Mechanical keyboard ",
             sku);
 
         Assert.Equal(sku, product.Sku);
         Assert.Equal("Keyboard", product.Name);
-        Assert.Equal(99.90m, product.Price);
+        Assert.Equal(99.90m, product.Price.Value);
         Assert.Equal("Mechanical keyboard", product.Description);
     }
 
@@ -35,7 +36,7 @@ public sealed class ProductTests
         Assert.Throws<ArgumentException>(() =>
             new Product(
                 " ",
-                99.90m,
+                Price.Create(99.90m),
                 "Mechanical keyboard",
                 sku));
     }
@@ -45,10 +46,10 @@ public sealed class ProductTests
     {
         var sku = GetSku();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
+        Assert.Throws<InvalidPriceException>(() =>
             new Product(
                 "Keyboard",
-                -1m,
+                Price.Create(-1m),
                 "Mechanical keyboard",
                 sku));
     }
@@ -59,7 +60,7 @@ public sealed class ProductTests
         Assert.Throws<ArgumentException>(() =>
             new Product(
                 "Keyboard",
-                99.90m,
+                Price.Create(99.90m),
                 " ",
                 GetSku()));
     }
@@ -71,17 +72,17 @@ public sealed class ProductTests
 
         var product = new Product(
             "Keyboard",
-            99.90m,
+            Price.Create(99.90m),
             "Mechanical keyboard",
             sku);
 
         product.Update(
             "Mouse",
-            49.90m,
+            Price.Create(49.90m),
             "Wireless mouse");
 
         Assert.Equal("Mouse", product.Name);
-        Assert.Equal(49.90m, product.Price);
+        Assert.Equal(49.90m, product.Price.Value);
         Assert.Equal("Wireless mouse", product.Description);
         Assert.Equal(sku, product.Sku);
     }
@@ -93,7 +94,7 @@ public sealed class ProductTests
 
         var product = new Product(
             "Keyboard",
-            99.90m,
+            Price.Create(99.90m),
             "Mechanical keyboard",
             sku);
 

@@ -11,10 +11,11 @@ public sealed class Product : AggregateRoot<int>
 
     public Product(
         string name,
-        decimal price,
+        Price price,
         string description,
         Sku sku)
     {
+        ArgumentNullException.ThrowIfNull(price);
         ArgumentNullException.ThrowIfNull(sku);
 
         SetName(name);
@@ -26,14 +27,14 @@ public sealed class Product : AggregateRoot<int>
         //In order to demostrate the use of domain events, we will raise a ProductCreatedDomainEvent when a new product is created.
         Raise(new ProductCreatedDomainEvent(
             Name,
-            Price,
+            Price.Value,
             Description,
             Sku.Value));
     }
 
     public string Name { get; private set; } = string.Empty;
 
-    public decimal Price { get; private set; }
+    public Price Price { get; private set; } = null!;
 
     public string Description { get; private set; } = string.Empty;
 
@@ -41,9 +42,11 @@ public sealed class Product : AggregateRoot<int>
 
     public void Update(
         string name,
-        decimal price,
+        Price price,
         string description)
     {
+        ArgumentNullException.ThrowIfNull(price);
+
         SetName(name);
         SetPrice(price);
         SetDescription(description);
@@ -58,12 +61,9 @@ public sealed class Product : AggregateRoot<int>
             Name = normalizedName;
     }
 
-    private void SetPrice(decimal price)
+    private void SetPrice(Price price)
     {
-        if (price < 0)
-            throw new ArgumentOutOfRangeException(
-                nameof(price),
-                "Price cannot be less than zero.");
+        ArgumentNullException.ThrowIfNull(price);
 
         if (Price != price)
             Price = price;

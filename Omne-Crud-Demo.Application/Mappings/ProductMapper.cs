@@ -13,7 +13,10 @@ public static partial class ProductMapper
 
     public static Sku ToSku(string value) => Sku.Create(value);
 
+    public static Price ToPrice(decimal value) => Price.Create(value);
+
     [MapProperty([nameof(Product.Sku), nameof(Sku.Value)], nameof(ProductDto.Sku))]
+    [MapProperty([nameof(Product.Price), nameof(Price.Value)], nameof(ProductDto.Price))]
     public static partial ProductDto ToDto(Product product);
 
     public static partial IReadOnlyList<ProductDto> ToDto(IReadOnlyList<Product> products);

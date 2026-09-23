@@ -55,6 +55,9 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.Property(x => x.Price)
             .HasColumnName("price")
+            .HasConversion(
+                price => price.Value,
+                value => Price.Create(value))
             .HasPrecision(18, 2)
             .IsRequired();
 

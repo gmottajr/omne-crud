@@ -1,4 +1,6 @@
-﻿namespace Omne_Crud_Demo.Domain.Tests.ValueObjects;
+﻿using Omne_Crud_Demo.Core.Exceptions;
+
+namespace Omne_Crud_Demo.Domain.Tests.ValueObjects;
 
 public class SkuTests
 {
@@ -24,23 +26,23 @@ public class SkuTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData("   ")]
-    public void Create_ShouldThrowArgumentException_WhenUsingWithEmptyValue(string value)
+    public void Create_ShouldThrowInvalidSkuException_WhenUsingWithEmptyValue(string value)
     {
-        Assert.Throws<ArgumentException>(() => Sku.Create(value));
+        Assert.Throws<InvalidSkuException>(() => Sku.Create(value));
     }
 
     [Fact]
-    public void Create_ShouldThrowArgumentNullException_WhenCreatingWithNullValue()
+    public void Create_ShouldThrowInvalidSkuException_WhenCreatingWithNullValue()
     {
-        Assert.Throws<ArgumentNullException>(() => Sku.Create(null!));
+        Assert.Throws<InvalidSkuException>(() => Sku.Create(null!));
     }
 
     [Fact]
-    public void Create_ShouldThrowArgumentOutOfRangeException_WhenValueExceedingMaximumLength()
+    public void Create_ShouldThrowInvalidSkuException_WhenValueExceedingMaximumLength()
     {
         var value = new string('A', 51);
 
-        Assert.Throws<ArgumentOutOfRangeException>(
+        Assert.Throws<InvalidSkuException>(
             () => Sku.Create(value));
     }
 

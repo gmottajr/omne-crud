@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Omne-Crud-Demo.Abstractions\Omne-Crud-Demo.Abstractions.csproj" />
+    <ProjectReference Include="..\Omne-Crud-Demo.Core\Omne-Crud-Demo.Core.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

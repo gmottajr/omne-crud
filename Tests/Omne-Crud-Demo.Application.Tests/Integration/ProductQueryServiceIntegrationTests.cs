@@ -194,7 +194,7 @@ public sealed class ProductQueryServiceIntegrationTests: IAsyncLifetime
 
         var product = new Product(
             name,
-            price,
+            Price.Create(price),
             description,
             Sku.Create(sku));
 
