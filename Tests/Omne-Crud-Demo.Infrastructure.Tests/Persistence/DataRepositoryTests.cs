@@ -221,8 +221,7 @@ public sealed class DataRepositoryTests
 
         context.ChangeTracker.Clear();
 
-        var result = await repository.QueryAsync(
-            product => product.Price.Value >= 500m && product.Price.Value < 1000);
+        var result = await repository.QueryAsync(product => product.Price.Value >= 500m && product.Price.Value < 1000);
 
         var product = Assert.Single(result);
 
@@ -243,8 +242,7 @@ public sealed class DataRepositoryTests
 
         await repository.SaveChangesAsync();
 
-        var result = await repository.QueryAsync(
-            product => product.Price.Value > 2000m);
+        var result = await repository.QueryAsync(product => product.Price.Value > 2000m);
 
         Assert.Empty(result);
     }
@@ -257,40 +255,19 @@ public sealed class DataRepositoryTests
 
         var repository = CreateRepository(context);
 
-        await repository.AddAsync(
-            CreateProduct(
-                "ABC-001",
-                PROD_GIT,
-                PRICE,
-                GIT_TYPE));
+        await repository.AddAsync(CreateProduct("ABC-001", PROD_GIT, PRICE, GIT_TYPE));
 
-        await repository.AddAsync(
-            CreateProduct(
-                "ABC-002",
-                "Mouse",
-                49.90m,
-                "Gaming mouse"));
+        await repository.AddAsync(CreateProduct("ABC-002","Mouse", 49.90m, "Gaming mouse"));
 
-        await repository.AddAsync(
-            CreateProduct(
-                "ABC-003",
-                "Monitor",
-                599.90m,
-                "Gaming monitor"));
+        await repository.AddAsync(CreateProduct("ABC-003","Monitor", 599.90m, "Gaming monitor"));
 
         await repository.SaveChangesAsync();
 
         context.ChangeTracker.Clear();
 
-        var result = await repository.QueryAsync(
-            product => product.Price.Value > 0,
-            orderBy: query => query.OrderByDescending(x => x.Price));
+        var result = await repository.QueryAsync(product => product.Price.Value > 0m, orderBy: query => query.OrderByDescending(x => x.Price.Value));
 
-        Assert.Collection(
-            result,
-            x => Assert.Equal(PROD_GIT, x.Name),
-            x => Assert.Equal("Monitor", x.Name),
-            x => Assert.Equal("Mouse", x.Name));
+        Assert.Collection(result, x => Assert.Equal(PROD_GIT, x.Name), x => Assert.Equal("Monitor", x.Name), x => Assert.Equal("Mouse", x.Name));
     }
 
     [Fact]

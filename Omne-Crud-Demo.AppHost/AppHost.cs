@@ -1,8 +1,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var server = builder.AddProject<Projects.Omne_Crud_Demo_Server>("server")
-    .WithHttpHealthCheck("/health")
-    .WithExternalHttpEndpoints();
+var productsDatabase = builder.AddProductsDatabase();
+var databaseMigrator = builder.AddDatabaseMigrator(productsDatabase);
+var server = builder.AddServer(productsDatabase, databaseMigrator);
 
 var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
     .WithReference(server)

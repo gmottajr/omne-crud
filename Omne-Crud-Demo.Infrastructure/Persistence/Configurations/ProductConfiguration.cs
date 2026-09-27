@@ -53,13 +53,15 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasMaxLength(200)
             .IsRequired();
 
-        builder.Property(x => x.Price)
-            .HasColumnName("price")
-            .HasConversion(
-                price => price.Value,
-                value => Price.Create(value))
-            .HasPrecision(18, 2)
-            .IsRequired();
+        builder.ComplexProperty(
+            product => product.Price,
+            price =>
+            {
+                price.Property(value => value.Value)
+                    .HasColumnName("price")
+                    .HasPrecision(18, 2)
+                    .IsRequired();
+            });
 
         builder.Property(x => x.Description)
             .HasColumnName("description")

@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,10 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Omne-Crud-Demo.DatabaseMigrator\Omne-Crud-Demo.DatabaseMigrator.csproj" />
     <ProjectReference Include="..\Omne-Crud-Demo.Server\Omne-Crud-Demo.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.5.3" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.5.3" />
   </ItemGroup>
 </Project>
