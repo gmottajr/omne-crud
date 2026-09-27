@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Omne-Crud-Demo.DatabaseMigrator\Omne-Crud-Demo.DatabaseMigrator.csproj" />
     <ProjectReference Include="..\..\Omne-Crud-Demo.Domain\Omne-Crud-Demo.Domain.csproj" />
     <ProjectReference Include="..\..\Omne-Crud-Demo.Infrastructure\Omne-Crud-Demo.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Omne-Crud-Demo.Server\Omne-Crud-Demo.Server.csproj" />

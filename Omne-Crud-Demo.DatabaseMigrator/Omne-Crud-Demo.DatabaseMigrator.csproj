@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Omne-Crud-Demo.Core\Omne-Crud-Demo.Core.csproj" />
     <ProjectReference Include="..\Omne-Crud-Demo.Infrastructure\Omne-Crud-Demo.Infrastructure.csproj" />
     <ProjectReference Include="..\Omne-Crud-Demo.IoC\Omne-Crud-Demo.IoC.csproj" />
   </ItemGroup>
