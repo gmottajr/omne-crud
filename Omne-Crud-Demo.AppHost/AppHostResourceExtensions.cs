@@ -7,16 +7,10 @@ internal static class AppHostResourceExtensions
     public static IResourceBuilder<IResourceWithConnectionString> AddProductsDatabase(
         this IDistributedApplicationBuilder builder)
     {
-        var connectionString = builder.AddParameter(
-            "productsdb-connection",
-            () => builder.Configuration["ConnectionStrings:productsdb"]
-                ?? throw new DistributedApplicationException(
-                    "Connection string 'productsdb' was not configured."),
-            secret: true);
+        var connectionString = builder.AddParameter("productsdb-connection", () => builder.Configuration["ConnectionStrings:productsdb"]
+                ?? throw new DistributedApplicationException("Connection string 'productsdb' was not configured."), secret: true);
 
-        return builder.AddConnectionString(
-            "productsdb",
-            ReferenceExpression.Create($"{connectionString}"));
+        return builder.AddConnectionString("productsdb", ReferenceExpression.Create($"{connectionString}"));
     }
 
     public static IResourceBuilder<ProjectResource> AddDatabaseMigrator(
@@ -24,11 +18,8 @@ internal static class AppHostResourceExtensions
         IResourceBuilder<IResourceWithConnectionString> productsDatabase)
     {
         return builder
-            .AddProject<Projects.Omne_Crud_Demo_DatabaseMigrator>(
-                "database-migrator")
-            .WithReference(
-                productsDatabase,
-                connectionName: DefaultConnectionName);
+            .AddProject<Projects.Omne_Crud_Demo_DatabaseMigrator>("database-migrator")
+            .WithReference(productsDatabase, connectionName: DefaultConnectionName);
     }
 
     public static IResourceBuilder<ProjectResource> AddServer(
@@ -43,6 +34,7 @@ internal static class AppHostResourceExtensions
                 connectionName: DefaultConnectionName)
             .WaitForCompletion(databaseMigrator)
             .WithHttpHealthCheck("/health")
-            .WithExternalHttpEndpoints();
+            .WithExternalHttpEndpoints()
+            .WithUrl("/scalar/v1", "API docs");
     }
 }

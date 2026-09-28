@@ -35,6 +35,20 @@ the React frontend. The existing database appears in the Aspire dashboard as
 the external `productsdb` resource, but Aspire does not provision or control
 the PostgreSQL service. Docker is not required by the application.
 
+The development connection string is intentionally not stored in an
+`appsettings.json` file. AppHost reads `ConnectionStrings:productsdb` from its
+user-secrets store, wraps it in the secret `productsdb-connection` parameter,
+and exposes it as the `productsdb` connection-string resource. Aspire masks the
+parameter value in the dashboard. The `WithReference` calls then inject that
+resource into the migrator and server as `ConnectionStrings__DefaultConnection`.
+The AppHost orchestration tests verify both the secret parameter and the
+injected environment-variable name without exposing the credential value.
+
+The server resource exposes an `API docs` link in the Aspire dashboard. Open it
+to use the Scalar reference UI for the FastEndpoints OpenAPI document. The
+machine-readable document is available at `/openapi/v1.json`, and the
+interactive reference is available at `/scalar/v1` while running in Development.
+
 ## Tests
 
 Run the frontend checks:

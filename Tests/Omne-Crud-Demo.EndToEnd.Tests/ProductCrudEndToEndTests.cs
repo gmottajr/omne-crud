@@ -19,6 +19,24 @@ public sealed class ProductCrudEndToEndTests : PageTest
     }
 
     [Fact]
+    public async Task Server_ShouldExposeFastEndpointsOpenApiAndScalarReference()
+    {
+        using var client = _fixture.CreateServerClient();
+
+        using var openApiResponse = await client.GetAsync("/openapi/v1.json");
+        Assert.Equal(HttpStatusCode.OK, openApiResponse.StatusCode);
+
+        var openApiDocument = await openApiResponse.Content.ReadAsStringAsync();
+        Assert.Contains("/products", openApiDocument, StringComparison.Ordinal);
+
+        using var scalarResponse = await client.GetAsync("/scalar/v1");
+        Assert.Equal(HttpStatusCode.OK, scalarResponse.StatusCode);
+
+        using var weatherResponse = await client.GetAsync("/api/weatherforecast");
+        Assert.Equal(HttpStatusCode.NotFound, weatherResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateProduct_ShouldPersistAndRemainVisibleAfterReload()
     {
         var sku = NewSku("CREATE");

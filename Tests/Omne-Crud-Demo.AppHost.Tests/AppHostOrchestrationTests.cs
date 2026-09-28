@@ -18,7 +18,9 @@ public sealed class AppHostOrchestrationTests
         var resourcesByName = builder.Resources.ToDictionary(resource => resource.Name);
 
         Assert.IsType<ConnectionStringResource>(resourcesByName["productsdb"]);
-        Assert.IsType<ParameterResource>(resourcesByName["productsdb-connection"]);
+        var connectionParameter =
+            Assert.IsType<ParameterResource>(resourcesByName["productsdb-connection"]);
+        Assert.True(connectionParameter.Secret);
         Assert.DoesNotContain(
             builder.Resources,
             resource => resource is ContainerResource);
