@@ -110,6 +110,48 @@ public sealed class ProductEndpointsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task FilterProducts_ShouldReturnOnlyProductsMatchingAllFilters()
+    {
+        await CreateProductAsync(
+            "KEY-001",
+            "Mechanical Keyboard",
+            249.90m);
+
+        await CreateProductAsync(
+            "KEY-002",
+            "Office Keyboard",
+            89.90m);
+
+        await CreateProductAsync(
+            "MOUSE-001",
+            "Gaming Mouse",
+            149.90m);
+
+        var response = await _client.GetAsync(
+            "/products/filter?name=keyboard&sku=001&minPrice=200&maxPrice=300" +
+            "&createdFrom=2000-01-01&createdTo=2100-01-01");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var products = await response.Content
+            .ReadFromJsonAsync<ApplicationResponse<List<ProductDto>>>();
+
+        Assert.NotNull(products);
+        Assert.NotNull(products.Data);
+        var product = Assert.Single(products.Data);
+        Assert.Equal("Mechanical Keyboard", product.Name);
+    }
+
+    [Fact]
+    public async Task FilterProducts_ShouldReturnBadRequest_WhenRangeIsInvalid()
+    {
+        var response = await _client.GetAsync(
+            "/products/filter?minPrice=100&maxPrice=50");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task PutProduct_ShouldUpdateProduct()
     {
         var id = await CreateProductAsync(
@@ -166,12 +208,20 @@ public sealed class ProductEndpointsTests : IAsyncLifetime
             getResponse.StatusCode);
     }
 
-    private async Task<int> CreateProductAsync(string sku, string name)
+    private Task<int> CreateProductAsync(string sku, string name)
+    {
+        return CreateProductAsync(sku, name, GeneratePriceRamdon());
+    }
+
+    private async Task<int> CreateProductAsync(
+        string sku,
+        string name,
+        decimal price)
     {
         var request = new CreateProductRequest
         {
             Name = name,
-            Price = GeneratePriceRamdon(),
+            Price = price,
             Description = $"This is my Description for {name}",
             Sku = sku
         };

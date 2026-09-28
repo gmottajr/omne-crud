@@ -221,6 +221,83 @@ button:disabled {
   background: #fff;
 }
 
+.product-filter {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  border: 1px solid #dce3ed;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+}
+
+.filter-heading {
+  margin-bottom: 0.85rem;
+}
+
+.filter-heading h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 1rem;
+}
+
+.filter-heading p {
+  margin: 0.25rem 0 0;
+  color: #647086;
+  font-size: 0.82rem;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.filter-grid label {
+  display: grid;
+  gap: 0.32rem;
+  color: #354158;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.filter-grid input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.58rem 0.65rem;
+  color: #172033;
+  background: #fff;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.filter-actions button {
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.62rem 0.9rem;
+  color: white;
+  background: #3867aa;
+  font-weight: 650;
+}
+
+.filter-actions .secondary-button {
+  color: #354158;
+  background: #e7ecf3;
+}
+
+.filter-actions button:hover:not(:disabled) {
+  background: #2b528b;
+}
+
+.filter-actions .secondary-button:hover:not(:disabled) {
+  background: #d8e0ea;
+}
+
 .product-card {
   display: flex;
   min-height: 245px;
@@ -400,6 +477,10 @@ button:disabled {
   .form-section {
     position: static;
   }
+
+  .filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 600px) {
@@ -424,6 +505,18 @@ button:disabled {
   }
 
   .sort-controls select {
+    width: 100%;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    flex-direction: column;
+  }
+
+  .filter-actions button {
     width: 100%;
   }
 

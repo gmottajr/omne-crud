@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { productsApi } from './api/productsApi';
+import { ProductFilter } from './components/ProductFilter';
 import { ProductForm } from './components/ProductForm';
 import { ProductList } from './components/ProductList';
 import {
   ApiError,
   type CreateProductRequest,
   type Product,
+  type ProductFilters,
   type UpdateProductRequest
 } from './types/product';
 
@@ -14,6 +16,10 @@ type LoadMode = 'initial' | 'refresh';
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof ApiError ? error.message : fallback;
+}
+
+function hasFilters(filters: ProductFilters): boolean {
+  return Object.values(filters).some((value) => value !== undefined && value !== '');
 }
 
 function App() {
@@ -27,8 +33,12 @@ function App() {
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [createFormVersion, setCreateFormVersion] = useState(0);
+  const [activeFilters, setActiveFilters] = useState<ProductFilters>({});
 
-  const loadProducts = useCallback(async (mode: LoadMode): Promise<boolean> => {
+  const loadProducts = useCallback(async (
+    mode: LoadMode,
+    filters: ProductFilters = {}
+  ): Promise<boolean> => {
     if (mode === 'initial') {
       setIsInitialLoading(true);
     } else {
@@ -38,7 +48,9 @@ function App() {
     setLoadError(null);
 
     try {
-      const data = await productsApi.getProducts();
+      const data = hasFilters(filters)
+        ? await productsApi.filterProducts(filters)
+        : await productsApi.getProducts();
       setProducts(data);
       return true;
     } catch (error) {
@@ -54,8 +66,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    void loadProducts('initial');
+    void loadProducts('initial', {});
   }, [loadProducts]);
+
+  const handleApplyFilters = async (filters: ProductFilters) => {
+    setActiveFilters(filters);
+    await loadProducts('refresh', filters);
+  };
+
+  const handleClearFilters = async () => {
+    setActiveFilters({});
+    await loadProducts('refresh', {});
+  };
 
   const handleCreate = async (request: CreateProductRequest) => {
     setIsSaving(true);
@@ -66,7 +88,7 @@ function App() {
       await productsApi.createProduct(request);
       setCreateFormVersion((version) => version + 1);
       setNotice('Product created successfully.');
-      await loadProducts('refresh');
+      await loadProducts('refresh', activeFilters);
     } catch (error) {
       setMutationError(errorMessage(error, 'Unable to create the product.'));
     } finally {
@@ -87,7 +109,7 @@ function App() {
       await productsApi.updateProduct(selectedProduct.id, request);
       setSelectedProduct(null);
       setNotice('Product updated successfully.');
-      await loadProducts('refresh');
+      await loadProducts('refresh', activeFilters);
     } catch (error) {
       setMutationError(errorMessage(error, 'Unable to update the product.'));
     } finally {
@@ -189,7 +211,7 @@ function App() {
                 </div>
                 <button
                   className="refresh-button"
-                  onClick={() => void loadProducts('refresh')}
+                  onClick={() => void loadProducts('refresh', activeFilters)}
                   disabled={isInitialLoading || isRefreshing}
                   type="button"
                 >
@@ -200,11 +222,17 @@ function App() {
               {loadError && (
                 <div className="message error-message" role="alert" aria-live="polite">
                   <span>{loadError}</span>
-                  <button type="button" onClick={() => void loadProducts('refresh')}>
+                  <button type="button" onClick={() => void loadProducts('refresh', activeFilters)}>
                     Try again
                   </button>
                 </div>
               )}
+
+              <ProductFilter
+                disabled={isInitialLoading || isRefreshing}
+                onApply={(filters) => void handleApplyFilters(filters)}
+                onClear={() => void handleClearFilters()}
+              />
 
               {isInitialLoading && products.length === 0 ? (
                 <div className="loading-state" role="status" aria-live="polite">
@@ -217,6 +245,7 @@ function App() {
               ) : (
                 <ProductList
                   products={products}
+                  isFiltered={hasFilters(activeFilters)}
                   deletingIds={deletingIds}
                   onEdit={handleEdit}
                   onDelete={(product) => void handleDelete(product)}

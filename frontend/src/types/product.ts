@@ -21,6 +21,17 @@ export interface UpdateProductRequest {
   description: string;
 }
 
+export interface ProductFilters {
+  name?: string;
+  sku?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  createdFrom?: string;
+  createdTo?: string;
+  updatedFrom?: string;
+  updatedTo?: string;
+}
+
 export interface ApplicationResponse<T = unknown> {
   success: boolean;
   data?: T | null;

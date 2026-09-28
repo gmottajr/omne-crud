@@ -3,6 +3,7 @@ import type { Product } from '../types/product';
 
 interface ProductListProps {
   products: Product[];
+  isFiltered: boolean;
   deletingIds: ReadonlySet<number>;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
@@ -63,7 +64,7 @@ function formatDate(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? '—' : dateFormatter.format(date);
 }
 
-export function ProductList({ products, deletingIds, onEdit, onDelete }: ProductListProps) {
+export function ProductList({ products, isFiltered, deletingIds, onEdit, onDelete }: ProductListProps) {
   const [sortOption, setSortOption] = useState<SortOption>('name-asc');
   const sortedProducts = useMemo(
     () => [...products].sort((first, second) => compareProducts(first, second, sortOption)),
@@ -73,8 +74,12 @@ export function ProductList({ products, deletingIds, onEdit, onDelete }: Product
   if (products.length === 0) {
     return (
       <div className="empty-state" role="status">
-        <h2>No products registered</h2>
-        <p>Add the first product using the form.</p>
+        <h2>{isFiltered ? 'No products found' : 'No products registered'}</h2>
+        <p>
+          {isFiltered
+            ? 'Try changing or clearing the filters.'
+            : 'Add the first product using the form.'}
+        </p>
       </div>
     );
   }

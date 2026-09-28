@@ -98,6 +98,102 @@ public sealed class ProductCrudEndToEndTests : PageTest
     }
 
     [Fact]
+    public async Task FilterProducts_ShouldApplyAndClearFiltersFromFrontend()
+    {
+        var marker = Guid.NewGuid().ToString("N")[..8];
+        var matchingName = $"E2E filter {marker} keyboard";
+        var matchingSkuFragment = $"E2E-FLT-{marker}";
+        var productIds = new List<int>();
+
+        try
+        {
+            var expectedSku = $"{matchingSkuFragment}-TARGET";
+            productIds.Add(await CreateProductThroughApiAsync(
+                expectedSku,
+                matchingName,
+                225m,
+                "Product expected from the browser filter scenario."));
+
+            var nameMismatchSku = $"{matchingSkuFragment}-NAME";
+            productIds.Add(await CreateProductThroughApiAsync(
+                nameMismatchSku,
+                $"E2E unrelated {marker} mouse",
+                225m,
+                "Product excluded by the partial name filter."));
+
+            var skuMismatch = $"E2E-OTHER-{marker}";
+            productIds.Add(await CreateProductThroughApiAsync(
+                skuMismatch,
+                matchingName,
+                225m,
+                "Product excluded by the partial SKU filter."));
+
+            var priceMismatchSku = $"{matchingSkuFragment}-PRICE";
+            productIds.Add(await CreateProductThroughApiAsync(
+                priceMismatchSku,
+                matchingName,
+                400m,
+                "Product excluded by the price range filter."));
+
+            await NavigateToFrontendAsync();
+            await Expect(ProductCard(expectedSku)).ToBeVisibleAsync();
+
+            await Page.GetByRole(
+                    AriaRole.Textbox,
+                    new PageGetByRoleOptions { Name = "Product name" })
+                .FillAsync($"filter {marker} keyboard");
+            await Page.GetByRole(
+                    AriaRole.Textbox,
+                    new PageGetByRoleOptions { Name = "Product SKU" })
+                .FillAsync(matchingSkuFragment);
+            await Page.GetByRole(
+                    AriaRole.Spinbutton,
+                    new PageGetByRoleOptions { Name = "Minimum price" })
+                .FillAsync("200");
+            await Page.GetByRole(
+                    AriaRole.Spinbutton,
+                    new PageGetByRoleOptions { Name = "Maximum price" })
+                .FillAsync("250");
+            await Page.GetByLabel("Created from").FillAsync("2000-01-01");
+            await Page.GetByLabel("Created to").FillAsync("2099-12-31");
+            await Page.GetByRole(
+                    AriaRole.Button,
+                    new PageGetByRoleOptions { Name = "Apply filters" })
+                .ClickAsync();
+
+            await Expect(ProductCard(expectedSku)).ToBeVisibleAsync();
+            await Expect(ProductCard(nameMismatchSku)).ToHaveCountAsync(0);
+            await Expect(ProductCard(skuMismatch)).ToHaveCountAsync(0);
+            await Expect(ProductCard(priceMismatchSku)).ToHaveCountAsync(0);
+
+            await Page.GetByLabel("Created from").FillAsync("2100-01-01");
+            await Page.GetByLabel("Created to").FillAsync("2100-12-31");
+            await Page.GetByRole(
+                    AriaRole.Button,
+                    new PageGetByRoleOptions { Name = "Apply filters" })
+                .ClickAsync();
+            await Expect(Page.GetByRole(
+                    AriaRole.Heading,
+                    new PageGetByRoleOptions { Name = "No products found" }))
+                .ToBeVisibleAsync();
+
+            await Page.GetByRole(
+                    AriaRole.Button,
+                    new PageGetByRoleOptions { Name = "Clear filters" })
+                .ClickAsync();
+            await Expect(ProductCard(expectedSku)).ToBeVisibleAsync();
+            await Expect(ProductCard(nameMismatchSku)).ToBeVisibleAsync();
+        }
+        finally
+        {
+            foreach (var productId in productIds)
+            {
+                await DeleteProductIfExistsAsync(productId);
+            }
+        }
+    }
+
+    [Fact]
     public async Task UpdateProduct_ShouldPersistChangesAndRemainUpdatedAfterReload()
     {
         var sku = NewSku("UPDATE");

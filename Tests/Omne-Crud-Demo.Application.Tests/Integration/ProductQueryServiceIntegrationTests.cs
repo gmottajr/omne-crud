@@ -174,6 +174,62 @@ public sealed class ProductQueryServiceIntegrationTests: IAsyncLifetime
         Assert.Empty(response.Data);
     }
 
+    [Fact]
+    public async Task FilterAsync_Should_Combine_Partial_Text_Price_And_Created_Date_Filters()
+    {
+        var createdFrom = DateTime.UtcNow.AddMinutes(-1);
+
+        await SeedProductAsync(
+            "Mechanical Keyboard",
+            249.90m,
+            "RGB mechanical keyboard",
+            "KEY-001");
+
+        await SeedProductAsync(
+            "Office Keyboard",
+            89.90m,
+            "Quiet office keyboard",
+            "KEY-002");
+
+        await SeedProductAsync(
+            "Gaming Mouse",
+            149.90m,
+            "Wireless gaming mouse",
+            "MOUSE-001");
+
+        await using var context = _fixture.CreateDbContext();
+        var service = CreateService(context);
+
+        var response = await service.FilterAsync(
+            new FilterProductsQuery(
+                Name: "  KEYboard ",
+                Sku: "001",
+                MinPrice: 200m,
+                MaxPrice: 300m,
+                CreatedFrom: createdFrom,
+                CreatedTo: DateTime.UtcNow.AddMinutes(1)));
+
+        Assert.True(response.Success);
+        Assert.NotNull(response.Data);
+        var product = Assert.Single(response.Data);
+        Assert.Equal("Mechanical Keyboard", product.Name);
+    }
+
+    [Fact]
+    public async Task FilterAsync_Should_Return_InvalidProduct_When_Range_Is_Invalid()
+    {
+        await using var context = _fixture.CreateDbContext();
+        var service = CreateService(context);
+
+        var response = await service.FilterAsync(
+            new FilterProductsQuery(
+                MinPrice: 100m,
+                MaxPrice: 50m));
+
+        Assert.False(response.Success);
+        Assert.Equal(ProductErrorCodes.InvalidProduct, response.ErrorCode);
+    }
+
     private static ProductQueryService CreateService(
         AppDbContext context)
     {

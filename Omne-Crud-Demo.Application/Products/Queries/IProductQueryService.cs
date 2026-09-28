@@ -10,4 +10,6 @@ public interface IProductQueryService
     Task<ApplicationResponse<ProductDto>> GetBySkuAsync(GetProductBySkuQuery query, CancellationToken ct = default);
 
     Task<ApplicationResponse<IReadOnlyList<ProductDto>>> GetAllAsync(GetProductsQuery query, CancellationToken ct = default);
+
+    Task<ApplicationResponse<IReadOnlyList<ProductDto>>> FilterAsync(FilterProductsQuery query, CancellationToken ct = default);
 }

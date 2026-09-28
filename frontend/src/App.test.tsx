@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -8,6 +8,7 @@ import { ApiError, type Product } from './types/product';
 vi.mock('./api/productsApi', () => ({
   productsApi: {
     getProducts: vi.fn(),
+    filterProducts: vi.fn(),
     getProductById: vi.fn(),
     getProductBySku: vi.fn(),
     createProduct: vi.fn(),
@@ -51,6 +52,7 @@ async function fillCreateForm(user: ReturnType<typeof userEvent.setup>) {
 describe('App', () => {
   beforeEach(() => {
     vi.mocked(productsApi.getProducts).mockReset().mockResolvedValue([]);
+    vi.mocked(productsApi.filterProducts).mockReset().mockResolvedValue([]);
     vi.mocked(productsApi.createProduct).mockReset().mockResolvedValue(10);
     vi.mocked(productsApi.updateProduct).mockReset().mockResolvedValue(undefined);
     vi.mocked(productsApi.deleteProduct).mockReset().mockResolvedValue(undefined);
@@ -251,5 +253,44 @@ describe('App', () => {
     await user.selectOptions(sortProducts, 'oldest');
     expect(productNames()).toEqual([keyboard.name, mouse.name]);
     expect(productsApi.getProducts).toHaveBeenCalledTimes(1);
+  });
+
+  it('filters products through the API and clears the active filters', async () => {
+    const user = userEvent.setup();
+    vi.mocked(productsApi.getProducts).mockResolvedValue([keyboard, mouse]);
+    vi.mocked(productsApi.filterProducts).mockResolvedValue([keyboard]);
+    render(<App />);
+
+    await screen.findByText(keyboard.name);
+
+    await user.type(screen.getByRole('textbox', { name: 'Product name' }), 'key');
+    await user.type(screen.getByRole('textbox', { name: 'Product SKU' }), '001');
+    await user.type(screen.getByRole('spinbutton', { name: 'Minimum price' }), '200');
+    await user.type(screen.getByRole('spinbutton', { name: 'Maximum price' }), '300');
+    fireEvent.change(screen.getByLabelText('Created from'), { target: { value: '2026-09-01' } });
+    fireEvent.change(screen.getByLabelText('Created to'), { target: { value: '2026-09-30' } });
+    fireEvent.change(screen.getByLabelText('Updated from'), { target: { value: '2026-09-02' } });
+    fireEvent.change(screen.getByLabelText('Updated to'), { target: { value: '2026-09-29' } });
+
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+
+    await waitFor(() => expect(productsApi.filterProducts).toHaveBeenCalledWith({
+      name: 'key',
+      sku: '001',
+      minPrice: 200,
+      maxPrice: 300,
+      createdFrom: '2026-09-01T00:00:00.000Z',
+      createdTo: '2026-09-30T23:59:59.999Z',
+      updatedFrom: '2026-09-02T00:00:00.000Z',
+      updatedTo: '2026-09-29T23:59:59.999Z'
+    }));
+    expect(screen.getByText(keyboard.name)).toBeInTheDocument();
+    expect(screen.queryByText(mouse.name)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    await waitFor(() => expect(productsApi.getProducts).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('textbox', { name: 'Product name' })).toHaveValue('');
+    expect(await screen.findByText(mouse.name)).toBeInTheDocument();
   });
 });
