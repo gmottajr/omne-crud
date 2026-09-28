@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { productsApi } from './api/productsApi';
 import { ProductFilter } from './components/ProductFilter';
-import { ProductForm } from './components/ProductForm';
+import { ProductDialog } from './components/ProductDialog';
 import { ProductList } from './components/ProductList';
 import {
   ApiError,
@@ -32,8 +32,8 @@ function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [createFormVersion, setCreateFormVersion] = useState(0);
   const [activeFilters, setActiveFilters] = useState<ProductFilters>({});
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const loadProducts = useCallback(async (
     mode: LoadMode,
@@ -86,7 +86,7 @@ function App() {
 
     try {
       await productsApi.createProduct(request);
-      setCreateFormVersion((version) => version + 1);
+      setIsCreateDialogOpen(false);
       setNotice('Product created successfully.');
       await loadProducts('refresh', activeFilters);
     } catch (error) {
@@ -147,15 +147,26 @@ function App() {
   };
 
   const handleEdit = (product: Product) => {
+    setIsCreateDialogOpen(false);
     setSelectedProduct(product);
     setMutationError(null);
     setNotice(null);
   };
 
-  const handleCancelEdit = () => {
+  const handleCloseProductDialog = () => {
+    setIsCreateDialogOpen(false);
     setSelectedProduct(null);
     setMutationError(null);
   };
+
+  const handleOpenCreateDialog = () => {
+    setSelectedProduct(null);
+    setMutationError(null);
+    setNotice(null);
+    setIsCreateDialogOpen(true);
+  };
+
+  const isProductDialogOpen = isCreateDialogOpen || selectedProduct !== null;
 
   return (
     <div className="app-container">
@@ -166,39 +177,17 @@ function App() {
       </header>
 
       <main className="main-content">
-        {(mutationError || notice) && (
+        {((mutationError && !isProductDialogOpen) || notice) && (
           <div
-            className={mutationError ? 'message error-message' : 'message notice-message'}
-            role={mutationError ? 'alert' : 'status'}
+            className={mutationError && !isProductDialogOpen ? 'message error-message' : 'message notice-message'}
+            role={mutationError && !isProductDialogOpen ? 'alert' : 'status'}
             aria-live="polite"
           >
-            {mutationError ?? notice}
+            {mutationError && !isProductDialogOpen ? mutationError : notice}
           </div>
         )}
 
-        <div className="workspace-grid">
-          <section className="form-section" aria-label="Product form">
-            <div className="card form-card">
-              {selectedProduct ? (
-                <ProductForm
-                  key={`edit-${selectedProduct.id}`}
-                  mode="edit"
-                  product={selectedProduct}
-                  onSubmit={handleUpdate}
-                  onCancel={handleCancelEdit}
-                  disabled={isSaving}
-                />
-              ) : (
-                <ProductForm
-                  key={`create-${createFormVersion}`}
-                  mode="create"
-                  onSubmit={handleCreate}
-                  disabled={isSaving}
-                />
-              )}
-            </div>
-          </section>
-
+        <div className="catalog-layout">
           <section className="products-section" aria-labelledby="products-heading">
             <div className="card">
               <div className="section-header">
@@ -209,14 +198,24 @@ function App() {
                     {products.length === 1 ? '1 product found.' : `${products.length} products found.`}
                   </p>
                 </div>
-                <button
-                  className="refresh-button"
-                  onClick={() => void loadProducts('refresh', activeFilters)}
-                  disabled={isInitialLoading || isRefreshing}
-                  type="button"
-                >
-                  {isRefreshing ? 'Refreshing...' : 'Refresh list'}
-                </button>
+                <div className="catalog-actions">
+                  <button
+                    className="add-product-button"
+                    onClick={handleOpenCreateDialog}
+                    disabled={isSaving}
+                    type="button"
+                  >
+                    Add new product
+                  </button>
+                  <button
+                    className="refresh-button"
+                    onClick={() => void loadProducts('refresh', activeFilters)}
+                    disabled={isInitialLoading || isRefreshing}
+                    type="button"
+                  >
+                    {isRefreshing ? 'Refreshing...' : 'Refresh list'}
+                  </button>
+                </div>
               </div>
 
               {loadError && (
@@ -255,6 +254,18 @@ function App() {
           </section>
         </div>
       </main>
+
+      {isProductDialogOpen && (
+        <ProductDialog
+          mode={selectedProduct ? 'edit' : 'create'}
+          product={selectedProduct ?? undefined}
+          disabled={isSaving}
+          error={mutationError}
+          onCreate={handleCreate}
+          onUpdate={handleUpdate}
+          onClose={handleCloseProductDialog}
+        />
+      )}
 
       <footer className="app-footer">
         <span>Omne CRUD Demo</span>

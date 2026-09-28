@@ -43,6 +43,7 @@ async function waitForInitialLoad() {
 }
 
 async function fillCreateForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Add new product' }));
   await user.type(screen.getByRole('textbox', { name: 'SKU' }), 'sku-100');
   await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Monitor');
   await user.type(screen.getByRole('spinbutton', { name: 'Price' }), '1599.90');
@@ -73,6 +74,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Keyboard')).toBeInTheDocument();
     expect(screen.getByText('SKU: SKU-001')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'New product' })).not.toBeInTheDocument();
   });
 
   it('shows the empty state after a successful response with no products', async () => {
@@ -206,7 +208,7 @@ describe('App', () => {
     await user.type(nameInput, 'Temporary value');
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
-    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     const mouseCard = screen.getByText('Mouse').closest('article');
     if (!mouseCard) {
@@ -214,6 +216,7 @@ describe('App', () => {
     }
 
     await user.click(within(mouseCard).getByRole('button', { name: 'Edit' }));
+    expect(screen.getByRole('dialog', { name: 'Edit Mouse' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Mouse');
     expect(screen.getByRole('textbox', { name: 'SKU' })).toHaveValue('SKU-002');
   });

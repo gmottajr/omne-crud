@@ -45,6 +45,14 @@ public sealed class ProductCrudEndToEndTests : PageTest
         try
         {
             await NavigateToFrontendAsync();
+            await Page.GetByRole(
+                    AriaRole.Button,
+                    new PageGetByRoleOptions { Name = "Add new product" })
+                .ClickAsync();
+            await Expect(Page.GetByRole(
+                    AriaRole.Dialog,
+                    new PageGetByRoleOptions { Name = "Add new product" }))
+                .ToBeVisibleAsync();
             await FillProductFormAsync(sku, name, "145.90", "Product created through the real frontend.");
             await Page.GetByRole(
                     AriaRole.Button,
@@ -220,11 +228,11 @@ public sealed class ProductCrudEndToEndTests : PageTest
 
             await Page.GetByRole(
                     AriaRole.Textbox,
-                    new PageGetByRoleOptions { Name = "Name" })
+                    new PageGetByRoleOptions { Name = "Name", Exact = true })
                 .FillAsync(updatedName);
             await Page.GetByRole(
                     AriaRole.Spinbutton,
-                    new PageGetByRoleOptions { Name = "Price" })
+                    new PageGetByRoleOptions { Name = "Price", Exact = true })
                 .FillAsync(updatedPrice.ToString(System.Globalization.CultureInfo.InvariantCulture));
             await Page.GetByRole(
                     AriaRole.Textbox,

@@ -9,7 +9,7 @@ interface CreateProductFormProps extends BaseProductFormProps {
   mode: 'create';
   product?: never;
   onSubmit: (request: CreateProductRequest) => void | Promise<void>;
-  onCancel?: never;
+  onCancel: () => void;
 }
 
 interface EditProductFormProps extends BaseProductFormProps {
@@ -132,6 +132,7 @@ export function ProductForm(props: ProductFormProps) {
           minLength={mode === 'create' ? 4 : undefined}
           maxLength={50}
           autoComplete="off"
+          autoFocus={mode === 'create'}
           aria-invalid={Boolean(errors.sku)}
           aria-describedby={errors.sku ? `${fieldId}-sku-error` : undefined}
         />
@@ -149,6 +150,7 @@ export function ProductForm(props: ProductFormProps) {
           minLength={3}
           maxLength={200}
           autoComplete="off"
+          autoFocus={mode === 'edit'}
           aria-invalid={Boolean(errors.name)}
           aria-describedby={errors.name ? `${fieldId}-name-error` : undefined}
         />
@@ -201,11 +203,9 @@ export function ProductForm(props: ProductFormProps) {
               ? 'Create product'
               : 'Save changes'}
         </button>
-        {props.mode === 'edit' && (
-          <button className="secondary-button" type="button" onClick={props.onCancel} disabled={disabled}>
-            Cancel
-          </button>
-        )}
+        <button className="secondary-button" type="button" onClick={props.onCancel} disabled={disabled}>
+          Cancel
+        </button>
       </div>
     </form>
   );
