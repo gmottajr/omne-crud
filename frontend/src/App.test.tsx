@@ -215,4 +215,41 @@ describe('App', () => {
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Mouse');
     expect(screen.getByRole('textbox', { name: 'SKU' })).toHaveValue('SKU-002');
   });
+
+  it('sorts the loaded products in both directions without another API request', async () => {
+    const user = userEvent.setup();
+    vi.mocked(productsApi.getProducts).mockResolvedValue([keyboard, mouse]);
+    render(<App />);
+
+    await screen.findByText(keyboard.name);
+    const productList = screen.getByLabelText('Product list');
+    const productNames = () =>
+      within(productList).getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent);
+
+    const sortProducts = screen.getByRole('combobox', { name: 'Sort products' });
+
+    expect(productNames()).toEqual([keyboard.name, mouse.name]);
+
+    await user.selectOptions(sortProducts, 'name-desc');
+    expect(productNames()).toEqual([mouse.name, keyboard.name]);
+
+    await user.selectOptions(sortProducts, 'sku-asc');
+    expect(productNames()).toEqual([keyboard.name, mouse.name]);
+
+    await user.selectOptions(sortProducts, 'sku-desc');
+    expect(productNames()).toEqual([mouse.name, keyboard.name]);
+
+    await user.selectOptions(sortProducts, 'price-asc');
+    expect(productNames()).toEqual([mouse.name, keyboard.name]);
+
+    await user.selectOptions(sortProducts, 'price-desc');
+    expect(productNames()).toEqual([keyboard.name, mouse.name]);
+
+    await user.selectOptions(sortProducts, 'newest');
+    expect(productNames()).toEqual([mouse.name, keyboard.name]);
+
+    await user.selectOptions(sortProducts, 'oldest');
+    expect(productNames()).toEqual([keyboard.name, mouse.name]);
+    expect(productsApi.getProducts).toHaveBeenCalledTimes(1);
+  });
 });
