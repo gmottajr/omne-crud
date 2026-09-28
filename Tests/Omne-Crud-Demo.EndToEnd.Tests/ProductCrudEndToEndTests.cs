@@ -1,0 +1,330 @@
+using System.Net;
+using System.Net.Http.Json;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit;
+using Omne_Crud_Demo.Core.Common.Services;
+using Omne_Crud_Demo.Core.Models;
+using Omne_Crud_Demo.Core.Models.Requests;
+
+namespace Omne_Crud_Demo.EndToEnd.Tests;
+
+[Collection(EndToEndCollection.Name)]
+public sealed class ProductCrudEndToEndTests : PageTest
+{
+    private readonly AppHostEndToEndFixture _fixture;
+
+    public ProductCrudEndToEndTests(AppHostEndToEndFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public async Task CreateProduct_ShouldPersistAndRemainVisibleAfterReload()
+    {
+        var sku = NewSku("CREATE");
+        const string name = "E2E created product";
+
+        try
+        {
+            await NavigateToFrontendAsync();
+            await FillProductFormAsync(sku, name, "145.90", "Product created through the real frontend.");
+            await Page.GetByRole(
+                    AriaRole.Button,
+                    new PageGetByRoleOptions { Name = "Create product" })
+                .ClickAsync();
+
+            await Expect(Page.GetByText("Product created successfully."))
+                .ToBeVisibleAsync();
+            await Expect(ProductCard(sku)).ToContainTextAsync(name);
+
+            await Page.ReloadAsync(new PageReloadOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded
+            });
+
+            await Expect(ProductCard(sku)).ToContainTextAsync(name);
+
+            var persistedProduct = await GetProductBySkuAsync(sku);
+            Assert.NotNull(persistedProduct);
+            Assert.Equal(name, persistedProduct.Name);
+        }
+        finally
+        {
+            await DeleteProductBySkuIfExistsAsync(sku);
+        }
+    }
+
+    [Fact]
+    public async Task ListProducts_ShouldDisplayProductPersistedThroughApi()
+    {
+        var sku = NewSku("LIST");
+        const string name = "E2E listed product";
+        var productId = await CreateProductThroughApiAsync(
+            sku,
+            name,
+            219.75m,
+            "Product arranged through the real API for the list scenario.");
+
+        try
+        {
+            await NavigateToFrontendAsync();
+
+            var productCard = ProductCard(sku);
+            await Expect(productCard).ToBeVisibleAsync();
+            await Expect(productCard).ToContainTextAsync(name);
+        }
+        finally
+        {
+            await DeleteProductIfExistsAsync(productId);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateProduct_ShouldPersistChangesAndRemainUpdatedAfterReload()
+    {
+        var sku = NewSku("UPDATE");
+        const string originalName = "E2E product before update";
+        const string updatedName = "E2E product after update";
+        const decimal updatedPrice = 321.45m;
+        const string updatedDescription = "Product updated through the real frontend.";
+        var productId = await CreateProductThroughApiAsync(
+            sku,
+            originalName,
+            120.50m,
+            "Product arranged through the real API for the update scenario.");
+
+        try
+        {
+            await NavigateToFrontendAsync();
+
+            var productCard = ProductCard(sku);
+            await Expect(productCard).ToContainTextAsync(originalName);
+            await productCard.GetByRole(
+                    AriaRole.Button,
+                    new LocatorGetByRoleOptions { Name = "Edit" })
+                .ClickAsync();
+
+            await Page.GetByRole(
+                    AriaRole.Textbox,
+                    new PageGetByRoleOptions { Name = "Name" })
+                .FillAsync(updatedName);
+            await Page.GetByRole(
+                    AriaRole.Spinbutton,
+                    new PageGetByRoleOptions { Name = "Price" })
+                .FillAsync(updatedPrice.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            await Page.GetByRole(
+                    AriaRole.Textbox,
+                    new PageGetByRoleOptions { Name = "Description" })
+                .FillAsync(updatedDescription);
+            await Page.GetByRole(
+                    AriaRole.Button,
+                    new PageGetByRoleOptions { Name = "Save changes" })
+                .ClickAsync();
+
+            await Expect(Page.GetByText("Product updated successfully."))
+                .ToBeVisibleAsync();
+            await Expect(ProductCard(sku)).ToContainTextAsync(updatedName);
+
+            await Page.ReloadAsync(new PageReloadOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded
+            });
+
+            await Expect(ProductCard(sku)).ToContainTextAsync(updatedName);
+
+            var persistedProduct = await GetProductByIdAsync(productId);
+            Assert.Equal(updatedName, persistedProduct.Name);
+            Assert.Equal(updatedPrice, persistedProduct.Price);
+            Assert.Equal(updatedDescription, persistedProduct.Description);
+        }
+        finally
+        {
+            await DeleteProductIfExistsAsync(productId);
+        }
+    }
+
+    [Fact]
+    public async Task DeleteProduct_ShouldRemovePersistedProductAndRemainAbsentAfterReload()
+    {
+        var sku = NewSku("DELETE");
+        const string name = "E2E product to delete";
+        var productId = await CreateProductThroughApiAsync(
+            sku,
+            name,
+            49.99m,
+            "Product arranged through the real API for the delete scenario.");
+
+        try
+        {
+            await NavigateToFrontendAsync();
+
+            var productCard = ProductCard(sku);
+            await Expect(productCard).ToContainTextAsync(name);
+            Page.Dialog += AcceptDialogAsync;
+
+            await productCard.GetByRole(
+                    AriaRole.Button,
+                    new LocatorGetByRoleOptions { Name = $"Delete {name}" })
+                .ClickAsync();
+
+            await Expect(Page.GetByText("Product deleted successfully."))
+                .ToBeVisibleAsync();
+            await Expect(ProductCard(sku)).ToHaveCountAsync(0);
+
+            await Page.ReloadAsync(new PageReloadOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded
+            });
+
+            await Expect(ProductCard(sku)).ToHaveCountAsync(0);
+
+            using var client = _fixture.CreateServerClient();
+            using var response = await client.GetAsync($"/products/{productId}");
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteProductIfExistsAsync(productId);
+        }
+    }
+
+    private async Task NavigateToFrontendAsync()
+    {
+        await Page.GotoAsync(
+            _fixture.WebFrontendEndpoint.AbsoluteUri,
+            new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+
+        await Expect(Page.GetByRole(
+                AriaRole.Heading,
+                new PageGetByRoleOptions { Name = "Registered products" }))
+            .ToBeVisibleAsync();
+    }
+
+    private async Task FillProductFormAsync(
+        string sku,
+        string name,
+        string price,
+        string description)
+    {
+        await Page.GetByRole(
+                AriaRole.Textbox,
+                new PageGetByRoleOptions { Name = "SKU", Exact = true })
+            .FillAsync(sku);
+        await Page.GetByRole(
+                AriaRole.Textbox,
+                new PageGetByRoleOptions { Name = "Name", Exact = true })
+            .FillAsync(name);
+        await Page.GetByRole(
+                AriaRole.Spinbutton,
+                new PageGetByRoleOptions { Name = "Price", Exact = true })
+            .FillAsync(price);
+        await Page.GetByRole(
+                AriaRole.Textbox,
+                new PageGetByRoleOptions { Name = "Description" })
+            .FillAsync(description);
+    }
+
+    private ILocator ProductCard(string sku)
+    {
+        return Page.Locator("article.product-card")
+            .Filter(new LocatorFilterOptions { HasTextString = $"SKU: {sku}" });
+    }
+
+    private async Task<int> CreateProductThroughApiAsync(
+        string sku,
+        string name,
+        decimal price,
+        string description)
+    {
+        using var client = _fixture.CreateServerClient();
+        using var response = await client.PostAsJsonAsync(
+            "/products",
+            new CreateProductRequest
+            {
+                Sku = sku,
+                Name = name,
+                Price = price,
+                Description = description
+            });
+
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content
+            .ReadFromJsonAsync<ApplicationResponse<int>>();
+
+        Assert.NotNull(body);
+        Assert.True(body.Success, body.ErrorMessage);
+        Assert.True(body.Data > 0);
+
+        return body.Data;
+    }
+
+    private async Task<ProductDto> GetProductByIdAsync(int productId)
+    {
+        using var client = _fixture.CreateServerClient();
+        using var response = await client.GetAsync($"/products/{productId}");
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content
+            .ReadFromJsonAsync<ApplicationResponse<ProductDto>>();
+
+        Assert.NotNull(body);
+        Assert.True(body.Success, body.ErrorMessage);
+        Assert.NotNull(body.Data);
+
+        return body.Data;
+    }
+
+    private async Task<ProductDto?> GetProductBySkuAsync(string sku)
+    {
+        using var client = _fixture.CreateServerClient();
+        using var response = await client.GetAsync(
+            $"/products/sku/{Uri.EscapeDataString(sku)}");
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content
+            .ReadFromJsonAsync<ApplicationResponse<ProductDto>>();
+
+        Assert.NotNull(body);
+        Assert.True(body.Success, body.ErrorMessage);
+        Assert.NotNull(body.Data);
+
+        return body.Data;
+    }
+
+    private async Task DeleteProductBySkuIfExistsAsync(string sku)
+    {
+        var product = await GetProductBySkuAsync(sku);
+
+        if (product is not null)
+        {
+            await DeleteProductIfExistsAsync(product.Id);
+        }
+    }
+
+    private async Task DeleteProductIfExistsAsync(int productId)
+    {
+        using var client = _fixture.CreateServerClient();
+        using var response = await client.DeleteAsync($"/products/{productId}");
+
+        Assert.True(
+            response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound,
+            $"Cleanup DELETE /products/{productId} returned HTTP {(int)response.StatusCode}.");
+    }
+
+    private static async void AcceptDialogAsync(object? sender, IDialog dialog)
+    {
+        await dialog.AcceptAsync();
+    }
+
+    private static string NewSku(string scenario)
+    {
+        return $"E2E-{scenario}-{Guid.NewGuid():N}";
+    }
+}

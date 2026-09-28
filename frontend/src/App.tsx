@@ -42,7 +42,7 @@ function App() {
       setProducts(data);
       return true;
     } catch (error) {
-      setLoadError(errorMessage(error, 'Não foi possível carregar os produtos.'));
+      setLoadError(errorMessage(error, 'Unable to load products.'));
       return false;
     } finally {
       if (mode === 'initial') {
@@ -65,10 +65,10 @@ function App() {
     try {
       await productsApi.createProduct(request);
       setCreateFormVersion((version) => version + 1);
-      setNotice('Produto cadastrado com sucesso.');
+      setNotice('Product created successfully.');
       await loadProducts('refresh');
     } catch (error) {
-      setMutationError(errorMessage(error, 'Não foi possível cadastrar o produto.'));
+      setMutationError(errorMessage(error, 'Unable to create the product.'));
     } finally {
       setIsSaving(false);
     }
@@ -86,10 +86,10 @@ function App() {
     try {
       await productsApi.updateProduct(selectedProduct.id, request);
       setSelectedProduct(null);
-      setNotice('Produto atualizado com sucesso.');
+      setNotice('Product updated successfully.');
       await loadProducts('refresh');
     } catch (error) {
-      setMutationError(errorMessage(error, 'Não foi possível atualizar o produto.'));
+      setMutationError(errorMessage(error, 'Unable to update the product.'));
     } finally {
       setIsSaving(false);
     }
@@ -97,7 +97,7 @@ function App() {
 
   const handleDelete = async (product: Product) => {
     const confirmed = window.confirm(
-      `Excluir o produto "${product.name}" (${product.sku})? Esta ação não pode ser desfeita.`
+      `Delete product "${product.name}" (${product.sku})? This action cannot be undone.`
     );
 
     if (!confirmed) {
@@ -112,9 +112,9 @@ function App() {
       await productsApi.deleteProduct(product.id);
       setProducts((current) => current.filter((item) => item.id !== product.id));
       setSelectedProduct((current) => current?.id === product.id ? null : current);
-      setNotice('Produto excluído com sucesso.');
+      setNotice('Product deleted successfully.');
     } catch (error) {
-      setMutationError(errorMessage(error, 'Não foi possível excluir o produto.'));
+      setMutationError(errorMessage(error, 'Unable to delete the product.'));
     } finally {
       setDeletingIds((current) => {
         const next = new Set(current);
@@ -139,8 +139,8 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <p className="eyebrow">Omne CRUD Demo</p>
-        <h1 className="app-title">Produtos</h1>
-        <p className="app-subtitle">Gerencie os produtos cadastrados na aplicação.</p>
+        <h1 className="app-title">Products</h1>
+        <p className="app-subtitle">Manage the products registered in the application.</p>
       </header>
 
       <main className="main-content">
@@ -155,7 +155,7 @@ function App() {
         )}
 
         <div className="workspace-grid">
-          <section className="form-section" aria-label="Formulário de produto">
+          <section className="form-section" aria-label="Product form">
             <div className="card form-card">
               {selectedProduct ? (
                 <ProductForm
@@ -181,10 +181,10 @@ function App() {
             <div className="card">
               <div className="section-header">
                 <div>
-                  <p className="eyebrow">Catálogo</p>
-                  <h2 id="products-heading" className="section-title">Produtos cadastrados</h2>
+                  <p className="eyebrow">Catalog</p>
+                  <h2 id="products-heading" className="section-title">Registered products</h2>
                   <p className="section-description">
-                    {products.length === 1 ? '1 produto encontrado.' : `${products.length} produtos encontrados.`}
+                    {products.length === 1 ? '1 product found.' : `${products.length} products found.`}
                   </p>
                 </div>
                 <button
@@ -193,7 +193,7 @@ function App() {
                   disabled={isInitialLoading || isRefreshing}
                   type="button"
                 >
-                  {isRefreshing ? 'Atualizando...' : 'Atualizar lista'}
+                  {isRefreshing ? 'Refreshing...' : 'Refresh list'}
                 </button>
               </div>
 
@@ -201,18 +201,18 @@ function App() {
                 <div className="message error-message" role="alert" aria-live="polite">
                   <span>{loadError}</span>
                   <button type="button" onClick={() => void loadProducts('refresh')}>
-                    Tentar novamente
+                    Try again
                   </button>
                 </div>
               )}
 
               {isInitialLoading && products.length === 0 ? (
                 <div className="loading-state" role="status" aria-live="polite">
-                  Carregando produtos...
+                  Loading products...
                 </div>
               ) : loadError && products.length === 0 ? (
                 <div className="unavailable-state" role="status">
-                  A lista não está disponível no momento.
+                  The product list is currently unavailable.
                 </div>
               ) : (
                 <ProductList

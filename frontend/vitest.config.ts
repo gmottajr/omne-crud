@@ -8,6 +8,7 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     pool: 'threads',
     maxWorkers: 1,
+    isolate: false,
     clearMocks: true,
     restoreMocks: true
   }

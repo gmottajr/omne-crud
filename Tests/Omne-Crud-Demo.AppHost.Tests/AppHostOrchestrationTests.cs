@@ -17,19 +17,22 @@ public sealed class AppHostOrchestrationTests
 
         var resourcesByName = builder.Resources.ToDictionary(resource => resource.Name);
 
-        Assert.IsType<PostgresServerResource>(resourcesByName["postgres"]);
-        Assert.IsType<PostgresDatabaseResource>(resourcesByName["productsdb"]);
+        Assert.IsType<ConnectionStringResource>(resourcesByName["productsdb"]);
+        Assert.IsType<ParameterResource>(resourcesByName["productsdb-connection"]);
+        Assert.DoesNotContain(
+            builder.Resources,
+            resource => resource is ContainerResource);
         Assert.IsType<ProjectResource>(resourcesByName["database-migrator"]);
         Assert.IsType<ProjectResource>(resourcesByName["server"]);
         Assert.True(resourcesByName.ContainsKey("webfrontend"));
     }
 
     [Fact]
-    public async Task DatabaseMigrator_ShouldReceiveDatabaseConnectionAndWaitForDatabase()
+    public async Task DatabaseMigrator_ShouldReceiveExternalDatabaseConnectionWithoutAWait()
     {
         await using var builder = await CreateAppHostBuilderAsync();
 
-        var productsDatabase = GetResource<PostgresDatabaseResource>(builder, "productsdb");
+        var productsDatabase = GetResource<ConnectionStringResource>(builder, "productsdb");
         var databaseMigrator = GetResource<ProjectResource>(builder, "database-migrator");
 
         Assert.Equal(
@@ -43,11 +46,9 @@ public sealed class AppHostOrchestrationTests
             databaseMigrator.Annotations.OfType<ResourceRelationshipAnnotation>(),
             annotation => ReferenceEquals(annotation.Resource, productsDatabase));
 
-        var databaseWait = Assert.Single(
+        Assert.DoesNotContain(
             databaseMigrator.Annotations.OfType<WaitAnnotation>(),
             annotation => ReferenceEquals(annotation.Resource, productsDatabase));
-
-        Assert.Equal(WaitType.WaitUntilHealthy, databaseWait.WaitType);
     }
 
     [Fact]
@@ -55,7 +56,7 @@ public sealed class AppHostOrchestrationTests
     {
         await using var builder = await CreateAppHostBuilderAsync();
 
-        var productsDatabase = GetResource<PostgresDatabaseResource>(builder, "productsdb");
+        var productsDatabase = GetResource<ConnectionStringResource>(builder, "productsdb");
         var databaseMigrator = GetResource<ProjectResource>(builder, "database-migrator");
         var server = GetResource<ProjectResource>(builder, "server");
 

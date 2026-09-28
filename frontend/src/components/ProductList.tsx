@@ -7,12 +7,12 @@ interface ProductListProps {
   onDelete: (product: Product) => void;
 }
 
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'BRL'
+  currency: 'USD'
 });
 
-const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'short',
   timeStyle: 'short'
 });
@@ -30,14 +30,14 @@ export function ProductList({ products, deletingIds, onEdit, onDelete }: Product
   if (products.length === 0) {
     return (
       <div className="empty-state" role="status">
-        <h2>Nenhum produto cadastrado</h2>
-        <p>Cadastre o primeiro produto usando o formulário.</p>
+        <h2>No products registered</h2>
+        <p>Add the first product using the form.</p>
       </div>
     );
   }
 
   return (
-    <div className="product-list" aria-label="Lista de produtos">
+    <div className="product-list" aria-label="Product list">
       {products.map((product) => {
         const isDeleting = deletingIds.has(product.id);
 
@@ -53,26 +53,26 @@ export function ProductList({ products, deletingIds, onEdit, onDelete }: Product
             <p className="product-description">{product.description}</p>
             <dl className="product-metadata">
               <div>
-                <dt>Criado em</dt>
+                <dt>Created at</dt>
                 <dd>{formatDate(product.createdAt)}</dd>
               </div>
               <div>
-                <dt>Atualizado em</dt>
+                <dt>Updated at</dt>
                 <dd>{formatDate(product.updatedAt)}</dd>
               </div>
             </dl>
             <div className="product-actions">
               <button type="button" onClick={() => onEdit(product)} disabled={isDeleting}>
-                Editar
+                Edit
               </button>
               <button
                 className="danger-button"
                 type="button"
                 onClick={() => onDelete(product)}
                 disabled={isDeleting}
-                aria-label={`Excluir ${product.name}`}
+                aria-label={`Delete ${product.name}`}
               >
-                {isDeleting ? 'Excluindo...' : 'Excluir'}
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </article>

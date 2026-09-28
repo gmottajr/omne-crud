@@ -19,7 +19,7 @@ async function request<TResponse, TRequest = undefined>(
       body: body === undefined ? undefined : JSON.stringify(body)
     });
   } catch (cause) {
-    throw new ApiError('Não foi possível conectar à API.', {
+    throw new ApiError('Unable to connect to the API.', {
       isNetworkError: true,
       cause
     });
@@ -33,14 +33,14 @@ async function request<TResponse, TRequest = undefined>(
 
   if (response.status === 204 || responseBody === undefined) {
     if (expectsData) {
-      throw new ApiError('A API não retornou os dados esperados.', { status: response.status });
+      throw new ApiError('The API did not return the expected data.', { status: response.status });
     }
 
     return undefined as TResponse;
   }
 
   if (!isApplicationResponse(responseBody)) {
-    throw new ApiError('A API retornou uma resposta inválida.', { status: response.status });
+    throw new ApiError('The API returned an invalid response.', { status: response.status });
   }
 
   if (!responseBody.success) {
@@ -52,7 +52,7 @@ async function request<TResponse, TRequest = undefined>(
   }
 
   if (!('data' in responseBody) || responseBody.data === undefined || responseBody.data === null) {
-    throw new ApiError('A API não retornou os dados esperados.', { status: response.status });
+    throw new ApiError('The API did not return the expected data.', { status: response.status });
   }
 
   return responseBody.data as TResponse;
@@ -76,7 +76,7 @@ async function readResponseBody(response: Response): Promise<unknown> {
   try {
     return JSON.parse(text) as unknown;
   } catch (cause) {
-    throw new ApiError('A API retornou uma resposta inválida.', {
+    throw new ApiError('The API returned an invalid response.', {
       status: response.status,
       cause
     });
@@ -94,7 +94,7 @@ function isApplicationResponse(value: unknown): value is ApplicationResponse {
 
 function createApiError(status: number, body: unknown): ApiError {
   if (isApplicationResponse(body)) {
-    return new ApiError(body.errorMessage ?? 'A API não conseguiu concluir a operação.', {
+    return new ApiError(body.errorMessage ?? 'The API could not complete the operation.', {
       status,
       errorCode: body.errorCode
     });
@@ -102,12 +102,12 @@ function createApiError(status: number, body: unknown): ApiError {
 
   if (isProblemDetails(body)) {
     return new ApiError(
-      body.detail ?? body.title ?? `A API retornou um erro (HTTP ${status}).`,
+      body.detail ?? body.title ?? `The API returned an error (HTTP ${status}).`,
       { status }
     );
   }
 
-  return new ApiError(`A API retornou um erro (HTTP ${status}).`, { status });
+  return new ApiError(`The API returned an error (HTTP ${status}).`, { status });
 }
 
 function isProblemDetails(value: unknown): value is { title?: string; detail?: string } {

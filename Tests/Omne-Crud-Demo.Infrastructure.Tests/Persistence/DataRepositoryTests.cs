@@ -448,7 +448,7 @@ public sealed class DataRepositoryTests
 
         var repository = CreateRepository(context);
 
-        var deleted = await repository.DeleteAsync(999);
+        var deleted = await repository.DeleteAsync(12345);
 
         Assert.Equal(false, deleted);
     }

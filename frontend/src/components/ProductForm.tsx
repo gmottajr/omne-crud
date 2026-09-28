@@ -47,15 +47,15 @@ function validate(values: ProductFormValues, mode: ProductFormProps['mode']): Pr
   const price = Number(values.price);
 
   if (mode === 'create' && (sku.length < 4 || sku.length > 50)) {
-    errors.sku = 'O SKU deve ter entre 4 e 50 caracteres.';
+    errors.sku = 'SKU must be between 4 and 50 characters.';
   }
 
   if (name.length < 3 || name.length > 200) {
-    errors.name = 'O nome deve ter entre 3 e 200 caracteres.';
+    errors.name = 'Name must be between 3 and 200 characters.';
   }
 
   if (description.length < 10 || description.length > 1000) {
-    errors.description = 'A descrição deve ter entre 10 e 1000 caracteres.';
+    errors.description = 'Description must be between 10 and 1,000 characters.';
   }
 
   if (
@@ -64,7 +64,7 @@ function validate(values: ProductFormValues, mode: ProductFormProps['mode']): Pr
     price < 0 ||
     !/^\d+(?:\.\d{1,2})?$/.test(values.price)
   ) {
-    errors.price = 'Informe um preço não negativo com até duas casas decimais.';
+    errors.price = 'Enter a non-negative price with up to two decimal places.';
   }
 
   return errors;
@@ -111,12 +111,12 @@ export function ProductForm(props: ProductFormProps) {
   return (
     <form className="product-form" onSubmit={handleSubmit} noValidate>
       <div className="form-heading">
-        <p className="eyebrow">{mode === 'create' ? 'Cadastro' : 'Edição'}</p>
-        <h2>{mode === 'create' ? 'Novo produto' : 'Editar produto'}</h2>
+        <p className="eyebrow">{mode === 'create' ? 'Create' : 'Edit'}</p>
+        <h2>{mode === 'create' ? 'New product' : 'Edit product'}</h2>
         <p>
           {mode === 'create'
-            ? 'Preencha os dados para adicionar um item ao catálogo.'
-            : 'Atualize os dados do produto. O SKU não pode ser alterado.'}
+            ? 'Enter the product details to add it to the catalog.'
+            : 'Update the product details. The SKU cannot be changed.'}
         </p>
       </div>
 
@@ -139,7 +139,7 @@ export function ProductForm(props: ProductFormProps) {
       </label>
 
       <label htmlFor={`${fieldId}-name`}>
-        Nome
+        Name
         <input
           id={`${fieldId}-name`}
           value={values.name}
@@ -156,7 +156,7 @@ export function ProductForm(props: ProductFormProps) {
       </label>
 
       <label htmlFor={`${fieldId}-price`}>
-        Preço
+        Price
         <input
           id={`${fieldId}-price`}
           type="number"
@@ -175,7 +175,7 @@ export function ProductForm(props: ProductFormProps) {
       </label>
 
       <label htmlFor={`${fieldId}-description`}>
-        Descrição
+        Description
         <textarea
           id={`${fieldId}-description`}
           value={values.description}
@@ -187,7 +187,7 @@ export function ProductForm(props: ProductFormProps) {
           aria-invalid={Boolean(errors.description)}
           aria-describedby={errors.description ? `${fieldId}-description-error` : undefined}
         />
-        <span className="field-hint">{values.description.length}/1000 caracteres</span>
+        <span className="field-hint">{values.description.length}/1,000 characters</span>
         {errors.description && (
           <span id={`${fieldId}-description-error`} className="field-error">{errors.description}</span>
         )}
@@ -196,14 +196,14 @@ export function ProductForm(props: ProductFormProps) {
       <div className="form-actions">
         <button type="submit" disabled={disabled}>
           {disabled
-            ? 'Salvando...'
+            ? 'Saving...'
             : mode === 'create'
-              ? 'Cadastrar produto'
-              : 'Salvar alterações'}
+              ? 'Create product'
+              : 'Save changes'}
         </button>
         {props.mode === 'edit' && (
           <button className="secondary-button" type="button" onClick={props.onCancel} disabled={disabled}>
-            Cancelar
+            Cancel
           </button>
         )}
       </div>
