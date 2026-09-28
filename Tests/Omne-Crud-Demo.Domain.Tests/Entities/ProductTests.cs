@@ -88,6 +88,46 @@ public sealed class ProductTests
     }
 
     [Fact]
+    public void Update_ShouldRaiseProductUpdatedDomainEvent()
+    {
+        var product = new Product(
+            "Keyboard",
+            Price.Create(99.90m),
+            "Mechanical keyboard",
+            GetSku());
+        product.ClearDomainEvents();
+
+        product.Update(
+            "Mouse",
+            Price.Create(49.90m),
+            "Wireless mouse");
+
+        var updated = Assert.IsType<ProductUpdatedDomainEvent>(
+            Assert.Single(product.DomainEvents));
+        Assert.Equal("Mouse", updated.Name);
+        Assert.Equal(49.90m, updated.Price);
+        Assert.Equal(SKU_CONST, updated.Sku);
+    }
+
+    [Fact]
+    public void MarkAsDeleted_ShouldRaiseProductDeletedDomainEvent()
+    {
+        var product = new Product(
+            "Keyboard",
+            Price.Create(99.90m),
+            "Mechanical keyboard",
+            GetSku());
+        product.ClearDomainEvents();
+
+        product.MarkAsDeleted();
+
+        var deleted = Assert.IsType<ProductDeletedDomainEvent>(
+            Assert.Single(product.DomainEvents));
+        Assert.Equal("Keyboard", deleted.Name);
+        Assert.Equal(SKU_CONST, deleted.Sku);
+    }
+
+    [Fact]
     public void Constructor_ShouldRaiseProductCreatedDomainEvent()
     {
         var sku = GetSku();

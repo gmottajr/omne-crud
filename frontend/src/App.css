@@ -180,6 +180,74 @@ button:disabled {
   background: #eefaf3;
 }
 
+.toast-container {
+  position: fixed;
+  z-index: 1000;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  width: min(24rem, calc(100vw - 2rem));
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #9acfb2;
+  border-left: 0.35rem solid #2d8a57;
+  border-radius: 0.7rem;
+  color: #173d29;
+  background: #f4fff8;
+  box-shadow: 0 0.8rem 2rem rgba(23, 32, 51, 0.18);
+  pointer-events: auto;
+  animation: toast-enter 180ms ease-out;
+}
+
+.toast-updated {
+  border-color: #91b8e8;
+  border-left-color: #3867aa;
+  color: #203f6c;
+  background: #f2f7fd;
+}
+
+.toast-deleted {
+  border-color: #e7a6a6;
+  border-left-color: #a63b3b;
+  color: #762525;
+  background: #fff4f4;
+}
+
+.toast strong,
+.toast p {
+  margin: 0;
+}
+
+.toast p {
+  margin-top: 0.3rem;
+  color: inherit;
+  font-size: 0.9rem;
+}
+
+.toast button {
+  border: 0;
+  padding: 0 0.2rem;
+  color: currentColor;
+  background: transparent;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
 .loading-state,
 .empty-state,
 .unavailable-state {
@@ -512,6 +580,143 @@ button:disabled {
   line-height: 1;
 }
 
+.delete-modal-backdrop {
+  background: rgba(15, 23, 42, 0.68);
+}
+
+.delete-dialog {
+  display: grid;
+  width: min(100%, 510px);
+  grid-template-columns: auto 1fr;
+  gap: 1.1rem;
+  padding: clamp(1.25rem, 4vw, 1.75rem);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1.75rem 5rem rgba(15, 23, 42, 0.42);
+  animation: delete-dialog-enter 180ms ease-out;
+}
+
+.delete-dialog-icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 0.85rem;
+  color: #b42318;
+  background: #fff0ee;
+}
+
+.delete-dialog-icon svg {
+  width: 1.45rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.delete-dialog-content {
+  min-width: 0;
+}
+
+.delete-dialog-eyebrow {
+  margin: 0 0 0.35rem;
+  color: #b42318;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.delete-dialog h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 1.35rem;
+}
+
+.delete-dialog #delete-dialog-description {
+  margin: 0.65rem 0 1rem;
+  color: #647086;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.delete-product-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #e5eaf1;
+  border-radius: 0.65rem;
+  color: #26344c;
+  background: #f7f9fc;
+}
+
+.delete-product-summary span {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delete-product-summary strong {
+  flex: 0 0 auto;
+  color: #647086;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.delete-dialog-error {
+  margin-top: 0.8rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.55rem;
+  color: #8a2020;
+  background: #fff1f1;
+  font-size: 0.85rem;
+}
+
+.delete-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.delete-dialog-actions button {
+  border: 0;
+  border-radius: 0.55rem;
+  padding: 0.7rem 1rem;
+  font-weight: 700;
+}
+
+.delete-dialog-actions .secondary-button {
+  color: #354158;
+  background: #edf1f6;
+}
+
+.delete-dialog-actions .secondary-button:hover:not(:disabled) {
+  background: #dfe6ef;
+}
+
+.confirm-delete-button {
+  color: #fff;
+  background: #b42318;
+  box-shadow: 0 0.35rem 0.9rem rgba(180, 35, 24, 0.24);
+}
+
+.confirm-delete-button:hover:not(:disabled) {
+  background: #921d15;
+}
+
+@keyframes delete-dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+}
+
 .dialog-close:hover:not(:disabled) {
   color: #172033;
   background: #dfe6ef;
@@ -593,5 +798,17 @@ button:disabled {
     width: 100%;
     max-height: calc(100vh - 1rem);
     border-radius: 1rem 1rem 0 0;
+  }
+
+  .delete-dialog {
+    grid-template-columns: 1fr;
+  }
+
+  .delete-dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .delete-dialog-actions button {
+    width: 100%;
   }
 }

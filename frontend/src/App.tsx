@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { productsApi } from './api/productsApi';
+import { subscribeToProductEvents } from './api/productEvents';
 import { ProductFilter } from './components/ProductFilter';
 import { ProductDialog } from './components/ProductDialog';
 import { ProductList } from './components/ProductList';
+import { ToastContainer, type ProductToast } from './components/ToastContainer';
+import { DeleteProductDialog } from './components/DeleteProductDialog';
 import {
   ApiError,
   type CreateProductRequest,
@@ -34,6 +37,8 @@ function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<ProductFilters>({});
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [toasts, setToasts] = useState<ProductToast[]>([]);
+  const [productPendingDeletion, setProductPendingDeletion] = useState<Product | null>(null);
 
   const loadProducts = useCallback(async (
     mode: LoadMode,
@@ -68,6 +73,15 @@ function App() {
   useEffect(() => {
     void loadProducts('initial', {});
   }, [loadProducts]);
+
+  useEffect(() => subscribeToProductEvents((notification) => {
+    const toastId = `${notification.id}-${Date.now()}`;
+    setToasts((current) => [...current.slice(-3), { ...notification, toastId }]);
+
+    window.setTimeout(() => {
+      setToasts((current) => current.filter((toast) => toast.toastId !== toastId));
+    }, 6000);
+  }), []);
 
   const handleApplyFilters = async (filters: ProductFilters) => {
     setActiveFilters(filters);
@@ -118,14 +132,6 @@ function App() {
   };
 
   const handleDelete = async (product: Product) => {
-    const confirmed = window.confirm(
-      `Delete product "${product.name}" (${product.sku})? This action cannot be undone.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setDeletingIds((current) => new Set(current).add(product.id));
     setMutationError(null);
     setNotice(null);
@@ -134,6 +140,7 @@ function App() {
       await productsApi.deleteProduct(product.id);
       setProducts((current) => current.filter((item) => item.id !== product.id));
       setSelectedProduct((current) => current?.id === product.id ? null : current);
+      setProductPendingDeletion(null);
       setNotice('Product deleted successfully.');
     } catch (error) {
       setMutationError(errorMessage(error, 'Unable to delete the product.'));
@@ -145,6 +152,17 @@ function App() {
       });
     }
   };
+
+  const handleRequestDelete = (product: Product) => {
+    setMutationError(null);
+    setNotice(null);
+    setProductPendingDeletion(product);
+  };
+
+  const handleCancelDelete = useCallback(() => {
+    setProductPendingDeletion(null);
+    setMutationError(null);
+  }, []);
 
   const handleEdit = (product: Product) => {
     setIsCreateDialogOpen(false);
@@ -177,7 +195,7 @@ function App() {
       </header>
 
       <main className="main-content">
-        {((mutationError && !isProductDialogOpen) || notice) && (
+        {((mutationError && !isProductDialogOpen && !productPendingDeletion) || notice) && (
           <div
             className={mutationError && !isProductDialogOpen ? 'message error-message' : 'message notice-message'}
             role={mutationError && !isProductDialogOpen ? 'alert' : 'status'}
@@ -247,7 +265,7 @@ function App() {
                   isFiltered={hasFilters(activeFilters)}
                   deletingIds={deletingIds}
                   onEdit={handleEdit}
-                  onDelete={(product) => void handleDelete(product)}
+                  onDelete={handleRequestDelete}
                 />
               )}
             </div>
@@ -266,6 +284,22 @@ function App() {
           onClose={handleCloseProductDialog}
         />
       )}
+
+      {productPendingDeletion && (
+        <DeleteProductDialog
+          product={productPendingDeletion}
+          disabled={deletingIds.has(productPendingDeletion.id)}
+          error={mutationError}
+          onConfirm={() => handleDelete(productPendingDeletion)}
+          onCancel={handleCancelDelete}
+        />
+      )}
+
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={(toastId) => setToasts((current) =>
+          current.filter((toast) => toast.toastId !== toastId))}
+      />
 
       <footer className="app-footer">
         <span>Omne CRUD Demo</span>

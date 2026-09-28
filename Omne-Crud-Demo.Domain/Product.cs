@@ -50,6 +50,21 @@ public sealed class Product : AggregateRoot<int>
         SetName(name);
         SetPrice(price);
         SetDescription(description);
+
+        Raise(new ProductUpdatedDomainEvent(
+            Id,
+            Name,
+            Price.Value,
+            Description,
+            Sku.Value));
+    }
+
+    public void MarkAsDeleted()
+    {
+        Raise(new ProductDeletedDomainEvent(
+            Id,
+            Name,
+            Sku.Value));
     }
 
     private void SetName(string name)

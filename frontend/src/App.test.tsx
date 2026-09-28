@@ -130,14 +130,33 @@ describe('App', () => {
   it('confirms and removes a product locally after DELETE', async () => {
     const user = userEvent.setup();
     vi.mocked(productsApi.getProducts).mockResolvedValue([keyboard]);
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<App />);
 
     await user.click(await screen.findByRole('button', { name: 'Delete Keyboard' }));
 
-    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining('Keyboard'));
+    const dialog = screen.getByRole('alertdialog', { name: 'Delete this product?' });
+    expect(within(dialog).getByText('Keyboard')).toBeInTheDocument();
+    expect(within(dialog).getByText('SKU-001')).toBeInTheDocument();
+    expect(productsApi.deleteProduct).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Delete product' }));
+
     await waitFor(() => expect(productsApi.deleteProduct).toHaveBeenCalledWith(1));
     expect(await screen.findByRole('heading', { name: 'No products registered' })).toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps the product when deletion is canceled', async () => {
+    const user = userEvent.setup();
+    vi.mocked(productsApi.getProducts).mockResolvedValue([keyboard]);
+    render(<App />);
+
+    await user.click(await screen.findByRole('button', { name: 'Delete Keyboard' }));
+    await user.click(screen.getByRole('button', { name: 'Keep product' }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Keyboard')).toBeInTheDocument();
+    expect(productsApi.deleteProduct).not.toHaveBeenCalled();
   });
 
   it('shows a functional error and preserves the form', async () => {

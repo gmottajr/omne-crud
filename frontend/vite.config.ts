@@ -12,6 +12,11 @@ export default defineConfig({
             target: apiTarget,
             changeOrigin: true,
             secure: false
+          },
+          '/events': {
+            target: apiTarget,
+            changeOrigin: true,
+            secure: false
           }
         }
       : undefined

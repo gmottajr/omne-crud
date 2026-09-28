@@ -1,6 +1,9 @@
 using FastEndpoints;
 using FastEndpoints.OpenApi;
 using Omne_Crud_Demo.IoC;
+using Omne_Crud_Demo.Abstractions;
+using Omne_Crud_Demo.Domain;
+using OmneCrudDemo.Server.Events;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +33,13 @@ builder.Services.AddProblemDetails();
 builder.Services.RegisterServices();
 builder.Services.RegisterRepositories();
 builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddSingleton<ProductEventStream>();
+builder.Services.AddSingleton<IDomainEventHandler<ProductCreatedDomainEvent>>(
+    services => services.GetRequiredService<ProductEventStream>());
+builder.Services.AddSingleton<IDomainEventHandler<ProductUpdatedDomainEvent>>(
+    services => services.GetRequiredService<ProductEventStream>());
+builder.Services.AddSingleton<IDomainEventHandler<ProductDeletedDomainEvent>>(
+    services => services.GetRequiredService<ProductEventStream>());
 builder.Services
     .AddFastEndpoints()
     .OpenApiDocument(options =>

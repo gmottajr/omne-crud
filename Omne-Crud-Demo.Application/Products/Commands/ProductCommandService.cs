@@ -92,12 +92,18 @@ public sealed class ProductCommandService : IProductCommandService
             return ApplicationResponse.Failure(ProductErrorCodes.NotFound, $"Product with ID '{command.Id}' was not found.");
         }
 
+        product.MarkAsDeleted();
+
         var gotDeleted =  await _repository.DeleteAsync(command.Id, ct);
 
         if (!gotDeleted)
         {
             return ApplicationResponse.Failure(ProductErrorCodes.NotFound, $"Product with ID '{command.Id}' was not found.");
         }
+
+        // DeleteAsync performs the database delete immediately. Saving here gives the
+        // DbContext its normal post-commit domain-event dispatch boundary.
+        await _repository.SaveChangesAsync(ct);
 
         return ApplicationResponse.Ok();
     }
